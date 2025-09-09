@@ -1,273 +1,233 @@
-import { supabase } from '../lib/supabase';
-import type { 
-  User, 
-  Patient, 
-  Hospital, 
-  PatientRecord, 
-  AccessPermission, 
-  UserRole, 
-  FileUploadData,
-  PatientRecordWithDetails,
-  AccessPermissionWithDetails
-} from '../types';
+// services/api.ts
+import { supabase } from './supabaseclient';
+import { v4 as uuidv4 } from 'uuid';
 
-// ==================== Authentication ====================
+export type Role = 'patient' | 'hospital' | 'admin';
 
-export async function signUpPatient(
-  email: string, 
-  password: string, 
-  name: string,
-  additionalData?: {
-    phone?: string;
-    date_of_birth?: string;
-    address?: string;
-    emergency_contact_name?: string;
-    emergency_contact_phone?: string;
-  }
-): Promise<{ user: any; needsEmailConfirmation: boolean }> {
-  const { data: authData, error: authError } = await supabase.auth.signUp({
+export type Hospital = {
+  id: string;
+  name: string;
+};
+
+// ==================== Auth / Signup ====================
+export async function signUp(email: string, password: string, role: Role, fullName?: string) {
+  // First, try to sign up the user with metadata and disable email confirmation temporarily
+  const { data: authData, error: authErr } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
-        role: 'patient',
-        name,
-        ...additionalData
-      }
+        role: role,
+        full_name: fullName
+      },
+      emailRedirectTo: `${window.location.origin}/auth/callback`
     }
   });
-
-  if (authError) throw authError;
-  if (!authData.user) throw new Error('User creation failed');
-
-  return {
-    user: authData.user,
-    needsEmailConfirmation: !authData.session
-  };
-}
-
-export async function signUpHospital(
-  email: string, 
-  password: string, 
-  name: string,
-  hospital_name: string,
-  license_number: string,
-  additionalData?: {
-    phone?: string;
-    address?: string;
-    department?: string;
-    specialty?: string;
-  }
-): Promise<{ user: any; needsEmailConfirmation: boolean }> {
-  console.log('signUpHospital called with:', { email, name, hospital_name, license_number });
   
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        role: 'hospital',
-        name,
-        hospital_name,
-        license_number,
-        ...additionalData
+  if (authErr) throw authErr;
+
+  const user = authData.user;
+  if (!user) throw new Error('No user returned from signUp');
+
+  try {
+    // Create the profile immediately after signup
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: user.id,
+        role,
+        name: fullName,
+        full_name: fullName,
+        email,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+
+    if (profileError) {
+      console.error('Profile creation error:', profileError);
+      throw profileError;
+    }
+
+    // Create role-specific record
+    if (role === 'patient') {
+      const { error: patientError } = await supabase
+        .from('patients')
+        .insert({
+          profile_id: user.id,
+          created_at: new Date().toISOString()
+        });
+      if (patientError) {
+        console.error('Patient record creation error:', patientError);
+        throw patientError;
+      }
+    } else if (role === 'hospital') {
+      const { error: hospError } = await supabase
+        .from('hospitals')
+        .insert({
+          profile_id: user.id,
+          name: fullName ?? 'Hospital',
+          created_at: new Date().toISOString()
+        });
+      if (hospError) {
+        console.error('Hospital record creation error:', hospError);
+        throw hospError;
       }
     }
-  });
 
-  console.log('signUpHospital auth result:', { authData, authError });
+    return {
+      user,
+      session: authData.session,
+      confirmEmail: true
+    };
+  } catch (error) {
+    console.error('Error in signup process:', error);
+    // If anything fails, attempt to clean up
+    await supabase.auth.signOut();
+    throw error;
+  }
+}
 
-  if (authError) throw authError;
-  if (!authData.user) throw new Error('User creation failed');
+export async function signIn(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data.user;
+}
 
+// ==================== Profile ====================
+export async function getMyProfile() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in');
+
+  // First try to get role from user metadata (faster)
+  const role = user.user_metadata?.role;
+  
+  if (role) {
+    return {
+      id: user.id,
+      email: user.email,
+      role: role,
+      name: user.user_metadata?.full_name || user.email,
+      full_name: user.user_metadata?.full_name
+    };
+  }
+
+  // Fallback to profile table if metadata is not available
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, role, name, full_name')
+    .eq('id', user.id)
+    .single();
+    
+  if (error) {
+    console.error('Failed to get profile:', error);
+    throw error;
+  }
+  
   return {
-    user: authData.user,
-    needsEmailConfirmation: !authData.session
+    ...data,
+    id: user.id,
+    email: user.email,
+    role: data.role || 'patient' // Default to patient if role is not set
   };
 }
 
-export async function signIn(email: string, password: string): Promise<User> {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if (error) throw error;
-  if (!data.user) throw new Error('Sign in failed');
-
-  return await getCurrentUser() as User;
-}
-
-export async function signOut(): Promise<void> {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
-}
-
-export async function getCurrentUser(): Promise<User | null> {
+// ==================== Records ====================
+export async function listRecordsForMe() {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    console.log('getCurrentUser: No auth user found');
-    return null;
-  }
-
-  console.log('getCurrentUser: Auth user found:', user.id, user.email);
-
-  // Check if user is a patient
-  const { data: patient, error: patientError } = await supabase
-    .from('patients')
-    .select('*')
-    .eq('auth_user_id', user.id)
-    .single();
-
-  console.log('getCurrentUser: Patient query result:', { patient, patientError });
-
-  if (patient) {
-    console.log('getCurrentUser: Returning patient user');
-    return {
-      id: patient.id,
-      email: patient.email,
-      role: 'patient',
-      name: patient.name
-    };
-  }
-
-  // Check if user is a hospital
-  const { data: hospital, error: hospitalError } = await supabase
-    .from('hospitals')
-    .select('*')
-    .eq('auth_user_id', user.id)
-    .single();
-
-  console.log('getCurrentUser: Hospital query result:', { hospital, hospitalError });
-
-  if (hospital) {
-    console.log('getCurrentUser: Returning hospital user');
-    return {
-      id: hospital.id,
-      email: hospital.email,
-      role: 'hospital',
-      name: hospital.name
-    };
-  }
-
-  console.log('getCurrentUser: No profile found for user');
-  return null;
-}
-
-export async function getCurrentPatient(): Promise<Patient | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: patient, error } = await supabase
-    .from('patients')
-    .select('*')
-    .eq('auth_user_id', user.id)
-    .single();
-
-  if (error) return null;
-  return patient;
-}
-
-export async function getCurrentHospital(): Promise<Hospital | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: hospital, error } = await supabase
-    .from('hospitals')
-    .select('*')
-    .eq('auth_user_id', user.id)
-    .single();
-
-  if (error) return null;
-  return hospital;
-}
-
-// ==================== Patient Records ====================
-
-export async function getMyRecords(): Promise<PatientRecord[]> {
-  const patient = await getCurrentPatient();
-  if (!patient) throw new Error('Not authenticated as patient');
+  if (!user) throw new Error('Not signed in');
+  const currentUserId = user.id;
 
   const { data, error } = await supabase
     .from('patient_records')
     .select('*')
-    .eq('patient_id', patient.id)
+    .eq('patient_id', currentUserId)
     .order('created_at', { ascending: false });
-
   if (error) throw error;
-  return data || [];
+  return data;
 }
 
-export async function getPatientRecords(patientId: string): Promise<PatientRecord[]> {
+// Alias for compatibility
+export const getMyRecords = listRecordsForMe;
+
+export async function listRecordsForPatient(patientId: string) {
   const { data, error } = await supabase
     .from('patient_records')
     .select('*')
     .eq('patient_id', patientId)
     .order('created_at', { ascending: false });
-
-  if (error) throw error;
-  return data || [];
-}
-
-export async function getPatientRecordsWithDetails(patientId?: string): Promise<PatientRecordWithDetails[]> {
-  let query = supabase
-    .from('patient_records_with_details')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (patientId) {
-    query = query.eq('patient_id', patientId);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data || [];
-}
-
-export async function uploadRecord(
-  patientId: string,
-  uploadData: FileUploadData
-): Promise<PatientRecord> {
-  const user = await getCurrentUser();
-  if (!user) throw new Error('Not authenticated');
-
-  // Generate unique file path
-  const fileExtension = uploadData.file.name.split('.').pop();
-  const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
-  const filePath = `${patientId}/${fileName}`;
-
-  // Upload file to storage
-  const { error: uploadError } = await supabase.storage
-    .from('records')
-    .upload(filePath, uploadData.file);
-
-  if (uploadError) throw uploadError;
-
-  // Create record in database with appropriate uploader
-  const insertData: any = {
-    patient_id: patientId,
-    record_type: uploadData.recordType,
-    title: uploadData.title,
-    notes: uploadData.notes,
-    storage_path: filePath
-  };
-
-  if (user.role === 'patient') {
-    const patient = await getCurrentPatient();
-    insertData.uploaded_by_patient_id = patient?.id;
-  } else if (user.role === 'hospital') {
-    const hospital = await getCurrentHospital();
-    insertData.uploaded_by_hospital_id = hospital?.id;
-  }
-
-  const { data, error } = await supabase
-    .from('patient_records')
-    .insert(insertData)
-    .select()
-    .single();
-
   if (error) throw error;
   return data;
+}
+
+export async function uploadRecord(file: File, patientId: string, recordType: string, title?: string, notes?: string) {
+  const fileId = uuidv4();
+  const path = `${patientId}/${fileId}-${file.name}`;
+
+  const { error: upErr } = await supabase.storage.from('records').upload(path, file);
+  if (upErr) throw upErr;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in');
+
+  const { data, error } = await supabase.from('patient_records').insert({
+    patient_id: patientId,
+    uploaded_by: user.id,
+    record_type: recordType,
+    title: title ?? file.name,
+    notes: notes ?? null,
+    storage_path: path,
+  }).select('*').single();
+  if (error) throw error;
+
+  return data;
+}
+
+export async function getRecordSignedUrl(storagePath: string, expiresInSec = 60) {
+  const { data, error } = await supabase.storage.from('records').createSignedUrl(storagePath, expiresInSec);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+export async function deleteRecord(recordId: string): Promise<void> {
+  // Get the current user to verify they own this record
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  // First get the record to find the storage path and verify ownership
+  const { data: record, error: fetchError } = await supabase
+    .from('patient_records')
+    .select('storage_path, patient_id')
+    .eq('id', recordId)
+    .single();
+
+  if (fetchError) throw fetchError;
+  if (!record) throw new Error('Record not found');
+
+  // Verify the user owns this record (patient_id should match user id)
+  if (record.patient_id !== user.id) {
+    throw new Error('Not authorized to delete this record');
+  }
+
+  // Delete from storage if path exists
+  if (record.storage_path) {
+    const { error: storageError } = await supabase.storage
+      .from('records')
+      .remove([record.storage_path]);
+    
+    if (storageError) {
+      console.warn('Storage deletion failed:', storageError);
+      // Continue with database deletion even if storage fails
+    }
+  }
+
+  // Delete from database
+  const { error: deleteError } = await supabase
+    .from('patient_records')
+    .delete()
+    .eq('id', recordId)
+    .eq('patient_id', user.id); // Extra safety check
+
+  if (deleteError) throw deleteError;
 }
 
 export async function getRecordDownloadUrl(storagePath: string): Promise<string> {
@@ -279,412 +239,217 @@ export async function getRecordDownloadUrl(storagePath: string): Promise<string>
   return data.signedUrl;
 }
 
-export async function deleteRecord(recordId: string): Promise<void> {
-  // First get the record to find the storage path
-  const { data: record, error: fetchError } = await supabase
-    .from('patient_records')
-    .select('storage_path')
-    .eq('id', recordId)
-    .single();
-
-  if (fetchError) throw fetchError;
-
-  // Delete from storage if path exists
-  if (record.storage_path) {
-    const { error: storageError } = await supabase.storage
-      .from('records')
-      .remove([record.storage_path]);
-    
-    if (storageError) console.warn('Storage deletion failed:', storageError);
-  }
-
-  // Delete from database
-  const { error: deleteError } = await supabase
-    .from('patient_records')
-    .delete()
-    .eq('id', recordId);
-
-  if (deleteError) throw deleteError;
+// ==================== Hospitals ====================
+export async function listHospitals(): Promise<Hospital[]> {
+  const { data, error } = await supabase.from('hospitals').select('id, name');
+  if (error) throw error;
+  return data ?? [];
 }
 
-// ==================== Access Permissions ====================
-
-export async function requestPatientAccess(patientId: string, expiryDays?: number): Promise<AccessPermission> {
-  const hospital = await getCurrentHospital();
-  if (!hospital) throw new Error('Not authenticated as hospital');
-
-  let expiresAt: string | undefined;
-  if (expiryDays) {
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + expiryDays);
-    expiresAt = expiryDate.toISOString();
+// ==================== Permissions / Consent ====================
+export async function grantAccess(patientId: string, hospitalId: string, durationDays?: number) {
+  let expiresAt: string | null = null;
+  if (durationDays) {
+    const date = new Date();
+    date.setDate(date.getDate() + durationDays);
+    expiresAt = date.toISOString();
   }
 
-  const { data, error } = await supabase
-    .from('access_permissions')
-    .upsert({
-      patient_id: patientId,
-      hospital_id: hospital.id,
-      status: 'pending',
-      expires_at: expiresAt,
-      requested_at: new Date().toISOString()
-    })
-    .select()
-    .single();
-
+  const { data, error } = await supabase.from('access_permissions').upsert({
+    patient_id: patientId,
+    hospital_id: hospitalId,
+    granted: true,
+    expires_at: expiresAt
+  }).select('*').single();
   if (error) throw error;
   return data;
 }
 
-export async function respondToAccessRequest(hospitalId: string, approve: boolean): Promise<AccessPermission> {
-  const patient = await getCurrentPatient();
-  if (!patient) throw new Error('Not authenticated as patient');
-
-  const status = approve ? 'approved' : 'rejected';
-
-  const { data, error } = await supabase
-    .from('access_permissions')
-    .update({ status })
-    .eq('patient_id', patient.id)
-    .eq('hospital_id', hospitalId)
-    .eq('status', 'pending') // Only update pending requests
-    .select()
-    .single();
-
+export async function revokeAccess(patientId: string, hospitalId: string) {
+  const { data, error } = await supabase.from('access_permissions').update({
+    granted: false
+  }).eq('patient_id', patientId).eq('hospital_id', hospitalId).select('*').single();
   if (error) throw error;
   return data;
 }
 
-export async function getPendingAccessRequests(): Promise<AccessPermissionWithDetails[]> {
-  const patient = await getCurrentPatient();
-  if (!patient) throw new Error('Not authenticated as patient');
-
-  const { data, error } = await supabase
-    .from('pending_access_requests')
-    .select('*')
-    .eq('patient_id', patient.id)
-    .order('requested_at', { ascending: false });
-
-  if (error) throw error;
-  return data || [];
-}
-
-export async function getMyAccessRequests(): Promise<AccessPermissionWithDetails[]> {
-  const hospital = await getCurrentHospital();
-  if (!hospital) throw new Error('Not authenticated as hospital');
+export async function listMyPermissions() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in');
 
   const { data, error } = await supabase
     .from('access_permissions')
-    .select(`
-      *,
-      patient:patients(name, email),
-      hospital:hospitals(name, hospital_name, email)
-    `)
-    .eq('hospital_id', hospital.id)
-    .order('requested_at', { ascending: false });
-
-  if (error) throw error;
-  return data || [];
-}
-
-export async function grantHospitalAccess(
-  hospitalId: string,
-  expiryDays?: number
-): Promise<AccessPermission> {
-  const patient = await getCurrentPatient();
-  if (!patient) throw new Error('Not authenticated as patient');
-
-  let expiresAt: string | undefined;
-  if (expiryDays) {
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + expiryDays);
-    expiresAt = expiryDate.toISOString();
-  }
-
-  const { data, error } = await supabase
-    .from('access_permissions')
-    .upsert({
-      patient_id: patient.id,
-      hospital_id: hospitalId,
-      status: 'approved',
-      expires_at: expiresAt
-    })
-    .select()
-    .single();
-
+    .select('*, patient:patient_id(full_name), hospital:hospital_id(full_name)')
+    .or(`patient_id.eq.${user.id},hospital_id.eq.${user.id}`);
   if (error) throw error;
   return data;
 }
 
-export async function revokeHospitalAccess(hospitalId: string): Promise<void> {
-  const patient = await getCurrentPatient();
-  if (!patient) throw new Error('Not authenticated as patient');
+export async function getConsentHistory() {
+  const { data, error } = await supabase.from('consent_history').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
 
-  const { error } = await supabase
-    .from('access_permissions')
-    .update({ status: 'rejected' })
-    .eq('patient_id', patient.id)
-    .eq('hospital_id', hospitalId);
+// ==================== Auth Functions ====================
+export async function getCurrentUser() {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  return user;
+}
 
+export async function signOut() {
+  const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }
 
-export async function getMyAccessPermissions(): Promise<AccessPermissionWithDetails[]> {
-  const patient = await getCurrentPatient();
-  if (!patient) throw new Error('Not authenticated as patient');
+// ==================== Hospital Functions ====================
+export async function getAllHospitals() {
+  return listHospitals();
+}
 
+export async function getAllPatientsForHospital(hospitalId: string) {
   const { data, error } = await supabase
-    .from('active_access_permissions')
-    .select('*')
-    .eq('patient_id', patient.id)
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-  return data || [];
-}
-
-// Test function to check database schema
-export async function testDatabaseSchema(): Promise<void> {
-  console.log('=== Testing Database Schema ===');
-  
-  try {
-    // Test access_permissions table structure
-    const { data: accessTest, error: accessError } = await supabase
-      .from('access_permissions')
-      .select('*')
-      .limit(1);
-    
-    console.log('access_permissions table test:', { accessTest, accessError });
-    
-    if (accessTest && accessTest.length > 0) {
-      console.log('access_permissions columns:', Object.keys(accessTest[0]));
-    }
-
-    // Test patients table
-    const { data: patientsTest, error: patientsError } = await supabase
-      .from('patients')
-      .select('*')
-      .limit(1);
-    
-    console.log('patients table test:', { patientsTest, patientsError });
-
-    // Test hospitals table
-    const { data: hospitalsTest, error: hospitalsError } = await supabase
-      .from('hospitals')
-      .select('*')
-      .limit(1);
-    
-    console.log('hospitals table test:', { hospitalsTest, hospitalsError });
-
-    // Test current user functions
-    const currentUser = await getCurrentUser();
-    const currentHospital = await getCurrentHospital();
-    const currentPatient = await getCurrentPatient();
-    
-    console.log('Current user info:', { currentUser, currentHospital, currentPatient });
-
-  } catch (error) {
-    console.error('Database schema test failed:', error);
-  }
-}
-
-export async function getPatientsWithAccess(): Promise<AccessPermissionWithDetails[]> {
-  const hospital = await getCurrentHospital();
-  if (!hospital) throw new Error('Not authenticated as hospital');
-
-  console.log('getPatientsWithAccess: Hospital ID:', hospital.id);
-
-  try {
-    // First try to get data directly from access_permissions table
-    const { data: accessData, error: accessError } = await supabase
-      .from('access_permissions')
-      .select('*')
-      .eq('hospital_id', hospital.id);
-
-    console.log('getPatientsWithAccess: Raw access_permissions data:', { accessData, accessError });
-
-    if (accessError) {
-      console.error('getPatientsWithAccess: Error fetching access_permissions:', accessError);
-      throw accessError;
-    }
-
-    if (!accessData || accessData.length === 0) {
-      console.log('getPatientsWithAccess: No access permissions found');
-      return [];
-    }
-
-    // Check if status column exists and filter by status
-    const filteredAccess = accessData.filter(permission => {
-      // If status column exists, filter by 'approved'
-      if ('status' in permission) {
-        return permission.status === 'approved';
-      }
-      // If status column doesn't exist, filter by granted = true (old schema)
-      if ('granted' in permission) {
-        return permission.granted === true;
-      }
-      // Default to include if neither column exists
-      return true;
-    });
-
-    console.log('getPatientsWithAccess: Filtered access data:', filteredAccess);
-
-    if (filteredAccess.length === 0) {
-      console.log('getPatientsWithAccess: No approved access found');
-      return [];
-    }
-
-    // Get patient and hospital details for each permission
-    const result = [];
-    for (const permission of filteredAccess) {
-      try {
-        // Get patient details
-        const { data: patient, error: patientError } = await supabase
-          .from('patients')
-          .select('id, name, email')
-          .eq('id', permission.patient_id)
-          .single();
-
-        if (patientError) {
-          console.error('Error fetching patient:', patientError);
-          continue;
-        }
-
-        // Get hospital details
-        const { data: hospitalData, error: hospitalError } = await supabase
-          .from('hospitals')
-          .select('id, name, hospital_name, email')
-          .eq('id', permission.hospital_id)
-          .single();
-
-        if (hospitalError) {
-          console.error('Error fetching hospital:', hospitalError);
-          continue;
-        }
-
-        result.push({
-          ...permission,
-          patient_name: patient?.name || 'Unknown',
-          patient_email: patient?.email || 'Unknown',
-          hospital_contact_name: hospitalData?.name || 'Unknown',
-          hospital_name: hospitalData?.hospital_name || 'Unknown',
-          hospital_email: hospitalData?.email || 'Unknown'
-        });
-      } catch (err) {
-        console.error('Error processing permission:', err);
-        continue;
-      }
-    }
-
-    console.log('getPatientsWithAccess: Final result:', result);
-    return result;
-
-  } catch (error) {
-    console.error('getPatientsWithAccess: Unexpected error:', error);
-    throw error;
-  }
-}
-
-export async function getAllPatientsForHospital(searchTerm?: string): Promise<Partial<Patient>[]> {
-  const hospital = await getCurrentHospital();
-  if (!hospital) throw new Error('Not authenticated as hospital');
-
-  let query = supabase
     .from('patients')
-    .select('id, name, email')
-    .order('name');
+    .select('*, profile:profile_id(id, name, full_name, email)')
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  
+  return data.map((patient: any) => ({
+    id: patient.profile.id,
+    name: patient.profile.full_name || patient.profile.name,
+    email: patient.profile.email
+  }));
+}
 
-  if (searchTerm) {
-    query = query.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
-  }
+export async function getPatientsWithAccess(hospitalId: string) {
+  return listPatientsWithAccess(hospitalId);
+}
 
-  const { data, error } = await query;
+export async function getPatientRecords(patientId: string) {
+  return listRecordsForPatient(patientId);
+}
+
+// ==================== Access Management ====================
+export async function getPendingAccessRequests() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in');
+
+  const { data, error } = await supabase
+    .from('access_requests')
+    .select('*, hospital:hospital_id(name), patient:patient_id(full_name)')
+    .eq('patient_id', user.id)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+  
   if (error) throw error;
   return data || [];
 }
 
-export async function getAccessStatusForPatient(patientId: string): Promise<AccessPermission | null> {
-  const hospital = await getCurrentHospital();
-  if (!hospital) throw new Error('Not authenticated as hospital');
+export async function getMyAccessPermissions() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in');
+
+  const { data, error } = await supabase
+    .from('access_permissions')
+    .select('*, hospital:hospital_id(name)')
+    .eq('patient_id', user.id)
+    .eq('granted', true)
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getAccessStatusForPatient(patientId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in');
 
   const { data, error } = await supabase
     .from('access_permissions')
     .select('*')
     .eq('patient_id', patientId)
-    .eq('hospital_id', hospital.id)
+    .eq('hospital_id', user.id)
     .single();
-
+  
   if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "not found"
   return data;
 }
 
-// ==================== Hospital and Patient Management ====================
+export async function grantHospitalAccess(hospitalId: string, durationDays?: number) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in');
 
-export async function getAllHospitals(): Promise<Hospital[]> {
-  const { data, error } = await supabase
-    .from('hospitals')
-    .select('*')
-    .eq('verified', true)
-    .order('hospital_name');
-
-  if (error) throw error;
-  return data || [];
+  return grantAccess(user.id, hospitalId, durationDays);
 }
 
-export async function getAllPatients(): Promise<Patient[]> {
+export async function requestPatientAccess(patientId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in');
+
   const { data, error } = await supabase
-    .from('patients')
+    .from('access_requests')
+    .insert({
+      patient_id: patientId,
+      hospital_id: user.id,
+      status: 'pending'
+    })
     .select('*')
-    .order('name');
-
-  if (error) throw error;
-  return data || [];
-}
-
-export async function updatePatientProfile(updates: Partial<Patient>): Promise<Patient> {
-  const patient = await getCurrentPatient();
-  if (!patient) throw new Error('Not authenticated as patient');
-
-  const { data, error } = await supabase
-    .from('patients')
-    .update(updates)
-    .eq('id', patient.id)
-    .select()
     .single();
-
+  
   if (error) throw error;
   return data;
 }
 
-export async function updateHospitalProfile(updates: Partial<Hospital>): Promise<Hospital> {
-  const hospital = await getCurrentHospital();
-  if (!hospital) throw new Error('Not authenticated as hospital');
-
+export async function respondToAccessRequest(requestId: string, approved: boolean) {
   const { data, error } = await supabase
-    .from('hospitals')
-    .update(updates)
-    .eq('id', hospital.id)
-    .select()
+    .from('access_requests')
+    .update({
+      status: approved ? 'approved' : 'rejected',
+      responded_at: new Date().toISOString()
+    })
+    .eq('id', requestId)
+    .select('*')
     .single();
-
+  
   if (error) throw error;
-  return data;
-}
-
-// ==================== Legacy Support Functions ====================
-
-// Legacy signUp function for backward compatibility
-export async function signUp(
-  email: string, 
-  password: string, 
-  role: UserRole, 
-  name: string
-): Promise<{ user: any; needsEmailConfirmation: boolean }> {
-  if (role === 'patient') {
-    return signUpPatient(email, password, name);
-  } else if (role === 'hospital') {
-    // For legacy calls, use basic hospital signup with placeholder data
-    return signUpHospital(email, password, name, 'Unknown Hospital', `TEMP_${Date.now()}`);
+  
+  // If approved, create access permission
+  if (approved && data) {
+    await supabase
+      .from('access_permissions')
+      .upsert({
+        patient_id: data.patient_id,
+        hospital_id: data.hospital_id,
+        granted: true
+      });
   }
-  throw new Error('Invalid role specified');
+  
+  return data;
+}
+
+export async function revokeHospitalAccess(hospitalId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in');
+
+  return revokeAccess(user.id, hospitalId);
+}
+
+// ==================== List Patients with Access ====================
+export async function listPatientsWithAccess(hospitalId: string) {
+  const { data, error } = await supabase
+    .from('access_permissions')
+    .select('*, patient:patient_id(id, full_name, email), expires_at')
+    .eq('hospital_id', hospitalId)
+    .eq('granted', true);
+
+  if (error) throw error;
+
+  return data.map((item: any) => ({
+    id: item.patient.id,
+    name: item.patient.full_name,
+    email: item.patient.email,
+    accessExpiresOn: item.expires_at ? new Date(item.expires_at).toLocaleDateString() : 'N/A'
+  }));
 }

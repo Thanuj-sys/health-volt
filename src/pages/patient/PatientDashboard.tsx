@@ -47,7 +47,7 @@ const PatientDashboard: React.FC = () => {
             try {
                 setIsLoading(true);
                 setError(null);
-                const data = await api.getMyRecords();
+                const data = await api.listRecordsForMe();
                 console.log('Fetched records:', data);
                 
                 // Initialize empty array if no records found
