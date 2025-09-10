@@ -3,11 +3,11 @@ import { useDropzone, DropzoneOptions } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import * as api from '../services/api';
-import type { MedicalRecord } from '../types';
+import type { PatientRecord } from '../types';
 import { Button, Select, Card, CardContent, CardHeader, CardTitle, LoadingSpinner, Badge } from './ui';
 
 interface FileUploadProps {
-  onSuccess: (newRecord: MedicalRecord) => void;
+  onSuccess: (newRecord: PatientRecord) => void;
   patientIdForHospital?: string; // Optional for hospital use
 }
 
@@ -16,7 +16,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onSuccess, patientIdForHospital
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [recordType, setRecordType] = useState<MedicalRecord['type']>('Lab Report');
+  const [recordType, setRecordType] = useState<PatientRecord['record_type']>('Lab Report');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(acceptedFiles);
@@ -57,21 +57,25 @@ const FileUpload: React.FC<FileUploadProps> = ({ onSuccess, patientIdForHospital
     try {
       const patientId = patientIdForHospital || user!.id;
 
-      const newRecordData = await api.uploadRecord(patientId, {
-        file: files[0],
-        recordType: recordType,
-        title: files[0].name,
-        notes: ''
-      });
+      const newRecordData = await api.uploadRecord(
+        files[0],
+        patientId,
+        recordType,
+        files[0].name,
+        ''
+      );
 
-      const formattedRecord: MedicalRecord = {
+      const formattedRecord: PatientRecord = {
         id: newRecordData.id,
-        name: newRecordData.title,
-        type: newRecordData.record_type,
-        uploadDate: new Date(newRecordData.created_at).toLocaleDateString(),
-        patientId: newRecordData.patient_id,
-        uploadedBy: newRecordData.uploaded_by || 'You',
-        fileUrl: '', // Optional: call getRecordDownloadUrl(newRecordData.storage_path)
+        patient_id: newRecordData.patient_id,
+        record_type: newRecordData.record_type,
+        title: newRecordData.title,
+        notes: newRecordData.notes,
+        storage_path: newRecordData.storage_path,
+        created_at: newRecordData.created_at,
+        updated_at: newRecordData.updated_at,
+        uploaded_by_hospital_id: newRecordData.uploaded_by_hospital_id,
+        uploaded_by_patient_id: newRecordData.uploaded_by_patient_id,
       };
 
       setUploadProgress(100);
@@ -211,7 +215,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onSuccess, patientIdForHospital
                     </label>
                     <Select
                       value={recordType}
-                      onChange={(e) => setRecordType(e.target.value as MedicalRecord['type'])}
+                      onChange={(e) => setRecordType(e.target.value as PatientRecord['record_type'])}
                       className="w-full"
                     >
                       <option value="Lab Report">Lab Report</option>

@@ -54,8 +54,7 @@ export interface Profile {
 export interface PatientRecord {
   id: string;
   patient_id: string;
-  uploaded_by_hospital_id?: string;
-  uploaded_by_patient_id?: string;
+  uploaded_by: string;
   record_type: 'Lab Report' | 'Imaging' | 'Prescription' | 'DICOM' | 'Note';
   title: string;
   notes?: string;

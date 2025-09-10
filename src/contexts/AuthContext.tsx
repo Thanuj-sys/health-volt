@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuthState = async (): Promise<void> => {
     try {
       setLoading(true);
-      const currentUser = await api.getCurrentUser();
+      const currentUser = await api.getMyProfile();
       setUser(currentUser);
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -50,7 +50,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signIn = async (email: string, password: string): Promise<void> => {
     try {
       setLoading(true);
-      const user = await api.signIn(email, password);
+      await api.signIn(email, password);
+      const user = await api.getMyProfile();
       setUser(user);
     } catch (error) {
       console.error('Sign in failed:', error);
@@ -70,13 +71,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       const result = await api.signUp(email, password, role, name);
       
-      if (!result.needsEmailConfirmation) {
+      if (!result.confirmEmail) {
         // User is automatically signed in
-        const user = await api.getCurrentUser();
+        const user = await api.getMyProfile();
         setUser(user);
       }
       
-      return { needsEmailConfirmation: result.needsEmailConfirmation };
+      return { needsEmailConfirmation: result.confirmEmail };
     } catch (error) {
       console.error('Sign up failed:', error);
       throw error;

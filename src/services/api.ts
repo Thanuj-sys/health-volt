@@ -93,6 +93,17 @@ export async function signIn(email: string, password: string) {
   return data.user;
 }
 
+export async function signOut() {
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+}
+
+export async function getCurrentUser() {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  return user;
+}
+
 // ==================== Profile ====================
 export async function getMyProfile() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -133,9 +144,10 @@ export async function getMyProfile() {
 
 // ==================== Records ====================
 export async function listRecordsForMe() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not signed in');
-  const currentUserId = user.id;
+  // Filter by current user's ID to satisfy common RLS policies
+  const { data: userData } = await supabase.auth.getUser();
+  const currentUserId = userData.user?.id;
+  if (!currentUserId) throw new Error('Not signed in');
 
   const { data, error } = await supabase
     .from('patient_records')
@@ -145,9 +157,6 @@ export async function listRecordsForMe() {
   if (error) throw error;
   return data;
 }
-
-// Alias for compatibility
-export const getMyRecords = listRecordsForMe;
 
 export async function listRecordsForPatient(patientId: string) {
   const { data, error } = await supabase
@@ -188,55 +197,34 @@ export async function getRecordSignedUrl(storagePath: string, expiresInSec = 60)
   return data.signedUrl;
 }
 
-export async function deleteRecord(recordId: string): Promise<void> {
-  // Get the current user to verify they own this record
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
-
-  // First get the record to find the storage path and verify ownership
+export async function deleteRecord(recordId: string) {
+  // First get the record to find the storage path
   const { data: record, error: fetchError } = await supabase
     .from('patient_records')
-    .select('storage_path, patient_id')
+    .select('storage_path')
     .eq('id', recordId)
     .single();
-
+    
   if (fetchError) throw fetchError;
-  if (!record) throw new Error('Record not found');
-
-  // Verify the user owns this record (patient_id should match user id)
-  if (record.patient_id !== user.id) {
-    throw new Error('Not authorized to delete this record');
-  }
-
-  // Delete from storage if path exists
+  
+  // Delete the file from storage if it exists
   if (record.storage_path) {
     const { error: storageError } = await supabase.storage
       .from('records')
       .remove([record.storage_path]);
-    
     if (storageError) {
-      console.warn('Storage deletion failed:', storageError);
-      // Continue with database deletion even if storage fails
+      console.error('Failed to delete file from storage:', storageError);
+      // Continue with database deletion even if storage deletion fails
     }
   }
-
-  // Delete from database
-  const { error: deleteError } = await supabase
+  
+  // Delete the record from the database
+  const { error } = await supabase
     .from('patient_records')
     .delete()
-    .eq('id', recordId)
-    .eq('patient_id', user.id); // Extra safety check
-
-  if (deleteError) throw deleteError;
-}
-
-export async function getRecordDownloadUrl(storagePath: string): Promise<string> {
-  const { data, error } = await supabase.storage
-    .from('records')
-    .createSignedUrl(storagePath, 3600); // 1 hour expiry
-
+    .eq('id', recordId);
+    
   if (error) throw error;
-  return data.signedUrl;
 }
 
 // ==================== Hospitals ====================
@@ -291,151 +279,6 @@ export async function getConsentHistory() {
   return data;
 }
 
-// ==================== Auth Functions ====================
-export async function getCurrentUser() {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error) throw error;
-  return user;
-}
-
-export async function signOut() {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
-}
-
-// ==================== Hospital Functions ====================
-export async function getAllHospitals() {
-  return listHospitals();
-}
-
-export async function getAllPatientsForHospital(hospitalId: string) {
-  const { data, error } = await supabase
-    .from('patients')
-    .select('*, profile:profile_id(id, name, full_name, email)')
-    .order('created_at', { ascending: false });
-  
-  if (error) throw error;
-  
-  return data.map((patient: any) => ({
-    id: patient.profile.id,
-    name: patient.profile.full_name || patient.profile.name,
-    email: patient.profile.email
-  }));
-}
-
-export async function getPatientsWithAccess(hospitalId: string) {
-  return listPatientsWithAccess(hospitalId);
-}
-
-export async function getPatientRecords(patientId: string) {
-  return listRecordsForPatient(patientId);
-}
-
-// ==================== Access Management ====================
-export async function getPendingAccessRequests() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not signed in');
-
-  const { data, error } = await supabase
-    .from('access_requests')
-    .select('*, hospital:hospital_id(name), patient:patient_id(full_name)')
-    .eq('patient_id', user.id)
-    .eq('status', 'pending')
-    .order('created_at', { ascending: false });
-  
-  if (error) throw error;
-  return data || [];
-}
-
-export async function getMyAccessPermissions() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not signed in');
-
-  const { data, error } = await supabase
-    .from('access_permissions')
-    .select('*, hospital:hospital_id(name)')
-    .eq('patient_id', user.id)
-    .eq('granted', true)
-    .order('created_at', { ascending: false });
-  
-  if (error) throw error;
-  return data || [];
-}
-
-export async function getAccessStatusForPatient(patientId: string) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not signed in');
-
-  const { data, error } = await supabase
-    .from('access_permissions')
-    .select('*')
-    .eq('patient_id', patientId)
-    .eq('hospital_id', user.id)
-    .single();
-  
-  if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "not found"
-  return data;
-}
-
-export async function grantHospitalAccess(hospitalId: string, durationDays?: number) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not signed in');
-
-  return grantAccess(user.id, hospitalId, durationDays);
-}
-
-export async function requestPatientAccess(patientId: string) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not signed in');
-
-  const { data, error } = await supabase
-    .from('access_requests')
-    .insert({
-      patient_id: patientId,
-      hospital_id: user.id,
-      status: 'pending'
-    })
-    .select('*')
-    .single();
-  
-  if (error) throw error;
-  return data;
-}
-
-export async function respondToAccessRequest(requestId: string, approved: boolean) {
-  const { data, error } = await supabase
-    .from('access_requests')
-    .update({
-      status: approved ? 'approved' : 'rejected',
-      responded_at: new Date().toISOString()
-    })
-    .eq('id', requestId)
-    .select('*')
-    .single();
-  
-  if (error) throw error;
-  
-  // If approved, create access permission
-  if (approved && data) {
-    await supabase
-      .from('access_permissions')
-      .upsert({
-        patient_id: data.patient_id,
-        hospital_id: data.hospital_id,
-        granted: true
-      });
-  }
-  
-  return data;
-}
-
-export async function revokeHospitalAccess(hospitalId: string) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not signed in');
-
-  return revokeAccess(user.id, hospitalId);
-}
-
 // ==================== List Patients with Access ====================
 export async function listPatientsWithAccess(hospitalId: string) {
   const { data, error } = await supabase
@@ -452,4 +295,107 @@ export async function listPatientsWithAccess(hospitalId: string) {
     email: item.patient.email,
     accessExpiresOn: item.expires_at ? new Date(item.expires_at).toLocaleDateString() : 'N/A'
   }));
+}
+
+// ==================== Function Aliases for Compatibility ====================
+// These aliases ensure compatibility with existing component imports
+
+export const getAllHospitals = listHospitals;
+export const getMyRecords = listRecordsForMe;
+export const getRecordDownloadUrl = getRecordSignedUrl;
+export const getMyAccessPermissions = listMyPermissions;
+export const getPatientsWithAccess = listPatientsWithAccess;
+
+// Additional missing functions that need to be implemented
+export async function grantHospitalAccess(hospitalId: string, durationDays?: number) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in');
+  return grantAccess(user.id, hospitalId, durationDays);
+}
+
+export async function revokeHospitalAccess(hospitalId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in');
+  return revokeAccess(user.id, hospitalId);
+}
+
+export async function getPendingAccessRequests() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in');
+
+  // Get access requests for the current hospital
+  const { data, error } = await supabase
+    .from('access_permissions')
+    .select('*, patient:patient_id(name, email)')
+    .eq('hospital_id', user.id)
+    .eq('granted', false)
+    .order('created_at', { ascending: false });
+    
+  if (error) throw error;
+  return data || [];
+}
+
+export async function respondToAccessRequest(requestId: string, approve: boolean) {
+  const { data, error } = await supabase
+    .from('access_permissions')
+    .update({ granted: approve })
+    .eq('id', requestId)
+    .select('*')
+    .single();
+    
+  if (error) throw error;
+  return { success: true, data };
+}
+
+export async function getAllPatientsForHospital() {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, name, email')
+    .eq('role', 'patient')
+    .order('name');
+    
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getAccessStatusForPatient(patientId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in');
+
+  const { data, error } = await supabase
+    .from('access_permissions')
+    .select('granted, expires_at')
+    .eq('patient_id', patientId)
+    .eq('hospital_id', user.id)
+    .single();
+    
+  if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "not found"
+  
+  return { 
+    hasAccess: data?.granted || false,
+    expiresAt: data?.expires_at 
+  };
+}
+
+export async function requestPatientAccess(patientId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in');
+
+  const { data, error } = await supabase
+    .from('access_permissions')
+    .upsert({
+      patient_id: patientId,
+      hospital_id: user.id,
+      granted: false, // Initially not granted, patient needs to approve
+      created_at: new Date().toISOString()
+    })
+    .select('*')
+    .single();
+    
+  if (error) throw error;
+  return { success: true, data };
+}
+
+export async function getPatientRecords(patientId: string) {
+  return listRecordsForPatient(patientId);
 }

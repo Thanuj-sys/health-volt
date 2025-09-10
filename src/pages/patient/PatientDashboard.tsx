@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import * as api from '../../services/api';
-import type { MedicalRecord } from '../../types';
+import type { PatientRecord } from '../../types';
 import { Button, Card, CardContent, CardHeader, CardTitle, SearchInput, Select, Badge, LoadingSpinner, Alert } from '../../components/ui';
 import { ICONS } from '../../constants.tsx';
 import FileUpload from '../../components/FileUpload';
@@ -17,7 +17,7 @@ const PatientDashboard: React.FC = () => {
     console.log('🏥 Patient Dashboard is rendering');
     const { user } = useAuth();
     const { addToast } = useToast();
-    const [records, setRecords] = useState<MedicalRecord[]>([]);
+    const [records, setRecords] = useState<PatientRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [filterType, setFilterType] = useState('All');
     const [filterDate, setFilterDate] = useState('');
@@ -27,7 +27,7 @@ const PatientDashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'records' | 'access'>('records');
     const [error, setError] = useState<string | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [recordToDelete, setRecordToDelete] = useState<MedicalRecord | null>(null);
+    const [recordToDelete, setRecordToDelete] = useState<PatientRecord | null>(null);
 
     console.log('🏥 Patient Dashboard - User:', user);
     console.log('🏥 Patient Dashboard - Loading state:', isLoading);
@@ -47,7 +47,7 @@ const PatientDashboard: React.FC = () => {
             try {
                 setIsLoading(true);
                 setError(null);
-                const data = await api.listRecordsForMe();
+                const data = await api.getMyRecords();
                 console.log('Fetched records:', data);
                 
                 // Initialize empty array if no records found
@@ -56,18 +56,8 @@ const PatientDashboard: React.FC = () => {
                     return;
                 }
 
-                // Transform the data to match MedicalRecord type
-                const formattedRecords = data.map(record => ({
-                    id: record.id,
-                    patientId: record.patient_id,
-                    type: record.record_type,
-                    name: record.title,
-                    uploadDate: new Date(record.created_at).toLocaleDateString(),
-                    fileUrl: record.storage_path,
-                    uploadedBy: 'You' // You can fetch the actual uploader's name if needed
-                }));
-
-                setRecords(formattedRecords);
+                // Transform the data to match PatientRecord type directly
+                setRecords(data || []);
             } catch (error) {
                 console.error('Error fetching records:', error);
                 setError('Failed to fetch medical records');
@@ -82,29 +72,29 @@ const PatientDashboard: React.FC = () => {
 
     const filteredRecords = useMemo(() => {
         return records
-            .filter(record => filterType === 'All' || record.type === filterType)
-            .filter(record => !filterDate || record.uploadDate >= filterDate)
+            .filter(record => filterType === 'All' || record.record_type === filterType)
+            .filter(record => !filterDate || new Date(record.created_at).toISOString().split('T')[0] >= filterDate)
             .filter(record => !searchTerm || 
-                record.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                record.type.toLowerCase().includes(searchTerm.toLowerCase())
+                record.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                record.record_type.toLowerCase().includes(searchTerm.toLowerCase())
             );
     }, [records, filterType, filterDate, searchTerm]);
 
-    const handleUploadSuccess = (newRecord: MedicalRecord) => {
+    const handleUploadSuccess = (newRecord: PatientRecord) => {
         setRecords(prev => [newRecord, ...prev]);
         setIsUploadVisible(false);
         addToast('File uploaded successfully!', 'success');
     };
 
-    const handleViewRecord = async (record: MedicalRecord) => {
+    const handleViewRecord = async (record: PatientRecord) => {
         try {
-            if (!record.fileUrl) {
+            if (!record.storage_path) {
                 addToast('File not found', 'error');
                 return;
             }
 
             // Get signed URL for download
-            const downloadUrl = await api.getRecordDownloadUrl(record.fileUrl);
+            const downloadUrl = await api.getRecordDownloadUrl(record.storage_path);
             
             // Open in new tab for viewing
             window.open(downloadUrl, '_blank');
@@ -115,20 +105,20 @@ const PatientDashboard: React.FC = () => {
         }
     };
 
-    const handleDownloadRecord = async (record: MedicalRecord) => {
+    const handleDownloadRecord = async (record: PatientRecord) => {
         try {
-            if (!record.fileUrl) {
+            if (!record.storage_path) {
                 addToast('File not found', 'error');
                 return;
             }
 
             // Get signed URL for download
-            const downloadUrl = await api.getRecordDownloadUrl(record.fileUrl);
+            const downloadUrl = await api.getRecordDownloadUrl(record.storage_path);
             
             // Create download link
             const link = document.createElement('a');
             link.href = downloadUrl;
-            link.download = record.name;
+            link.download = record.title;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -141,7 +131,7 @@ const PatientDashboard: React.FC = () => {
         }
     };
 
-    const handleDeleteRecord = async (record: MedicalRecord) => {
+    const handleDeleteRecord = async (record: PatientRecord) => {
         setRecordToDelete(record);
         setIsDeleteModalOpen(true);
     };
@@ -176,7 +166,7 @@ const PatientDashboard: React.FC = () => {
     };
 
     const getRecordTypeBadge = (type: string) => {
-        const variants = {
+        const variants: Record<string, 'success' | 'default' | 'warning' | 'secondary' | 'outline'> = {
             'Lab Report': 'success',
             'Imaging': 'default',
             'Prescription': 'warning',
@@ -411,15 +401,15 @@ const PatientDashboard: React.FC = () => {
                                                                 <div className="flex items-center justify-between">
                                                                     <div className="flex items-center space-x-3">
                                                                         <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-full flex items-center justify-center text-white text-lg">
-                                                                            {getRecordTypeIcon(record.type)}
+                                                                            {getRecordTypeIcon(record.record_type)}
                                                                         </div>
                                                                         <div className="flex-1 min-w-0">
-                                                                            <h4 className="font-bold text-slate-900 truncate">{record.name}</h4>
-                                                                            <p className="text-sm text-slate-800 font-medium">Uploaded by {record.uploadedBy}</p>
+                                                                            <h4 className="font-bold text-slate-900 truncate">{record.title}</h4>
+                                                                            <p className="text-sm text-slate-800 font-medium">Uploaded by You</p>
                                                                         </div>
                                                                     </div>
-                                                                    <Badge variant={getRecordTypeBadge(record.type)} className="text-xs">
-                                                                        {record.type}
+                                                                    <Badge variant={getRecordTypeBadge(record.record_type)} className="text-xs">
+                                                                        {record.record_type}
                                                                     </Badge>
                                                                 </div>
                                                             </CardHeader>
@@ -428,7 +418,7 @@ const PatientDashboard: React.FC = () => {
                                                                 <div className="space-y-3">
                                                                     <div className="flex justify-between text-sm">
                                                                         <span className="text-slate-800 font-medium">Upload Date:</span>
-                                                                        <span className="font-medium text-slate-900">{record.uploadDate}</span>
+                                                                        <span className="font-medium text-slate-900">{new Date(record.created_at).toLocaleDateString()}</span>
                                                                     </div>
                                                                     
                                                                     <div className="pt-4 border-t border-slate-100 flex gap-2">
@@ -501,7 +491,7 @@ const PatientDashboard: React.FC = () => {
                     setRecordToDelete(null);
                 }}
                 onConfirm={confirmDeleteRecord}
-                recordName={recordToDelete?.name || ''}
+                recordName={recordToDelete?.title || ''}
             />
         </div>
     );

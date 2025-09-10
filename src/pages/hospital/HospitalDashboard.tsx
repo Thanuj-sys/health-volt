@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import * as api from '../../services/api';
-import type { AccessPermissionWithDetails } from '../../types';
+import type { PatientWithAccess } from '../../types';
 import { Button, Card, CardContent, CardHeader, CardTitle, SearchInput, CardDescription, Badge, LoadingSpinner, Alert } from '../../components/ui';
 import PatientRequestModal from '../../components/PatientRequestModal';
 
@@ -12,7 +12,7 @@ const HospitalDashboard: React.FC = () => {
     const { user } = useAuth();
     const { addToast } = useToast();
     const navigate = useNavigate();
-    const [patients, setPatients] = useState<AccessPermissionWithDetails[]>([]);
+    const [patients, setPatients] = useState<PatientWithAccess[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showRequestModal, setShowRequestModal] = useState(false);
@@ -27,7 +27,7 @@ const HospitalDashboard: React.FC = () => {
                 console.log('HospitalDashboard: Fetching patients for user:', user);
                 
                 // Get patients with access to hospital
-                const data = await api.getPatientsWithAccess();
+                const data = await api.getPatientsWithAccess(user.id);
                 console.log('HospitalDashboard: Received data:', data);
                 setPatients(data);
             } catch (error) {
@@ -44,14 +44,15 @@ const HospitalDashboard: React.FC = () => {
 
     const filteredPatients = useMemo(() => {
         return patients.filter(p =>
-            p.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.patient_email.toLowerCase().includes(searchTerm.toLowerCase())
+            p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.email.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [patients, searchTerm]);
 
     const refreshPatients = async () => {
+        if (!user) return;
         try {
-            const data = await api.getPatientsWithAccess();
+            const data = await api.getPatientsWithAccess(user.id);
             setPatients(data);
         } catch (error) {
             console.error(error);
@@ -188,11 +189,11 @@ const HospitalDashboard: React.FC = () => {
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center space-x-3">
                                                                 <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                                                    {permission.patient_name.charAt(0).toUpperCase()}
+                                                                    {permission.name.charAt(0).toUpperCase()}
                                                                 </div>
                                                                 <div>
-                                                                    <h4 className="font-bold text-slate-900">{permission.patient_name}</h4>
-                                                                    <p className="text-sm text-slate-600">{permission.patient_email}</p>
+                                                                    <h4 className="font-bold text-slate-900">{permission.name}</h4>
+                                                                    <p className="text-sm text-slate-600">{permission.email}</p>
                                                                 </div>
                                                             </div>
                                                             <Badge variant="success" className="text-xs">
@@ -205,21 +206,18 @@ const HospitalDashboard: React.FC = () => {
                                                         <div className="space-y-3">
                                                             <div className="flex justify-between text-sm">
                                                                 <span className="text-slate-600">Access Granted:</span>
-                                                                <span className="font-medium">{new Date(permission.created_at).toLocaleDateString()}</span>
+                                                                <span className="font-medium">{permission.accessGrantedOn}</span>
                                                             </div>
                                                             <div className="flex justify-between text-sm">
                                                                 <span className="text-slate-600">Expires:</span>
                                                                 <span className="font-medium">
-                                                                    {permission.expires_at 
-                                                                        ? new Date(permission.expires_at).toLocaleDateString()
-                                                                        : 'No expiry'
-                                                                    }
+                                                                    {permission.accessExpiresOn || 'No expiry'}
                                                                 </span>
                                                             </div>
                                                             
                                                             <div className="pt-4 border-t border-slate-100">
                                                                 <Button 
-                                                                    onClick={() => navigate(`/patient/${permission.patient_id}`)}
+                                                                    onClick={() => navigate(`/patient/${permission.id}`)}
                                                                     className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 group-hover:shadow-lg transition-all duration-300"
                                                                     size="sm"
                                                                 >
