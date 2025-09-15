@@ -70,7 +70,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onSuccess, patientIdForHospital
         type: newRecordData.record_type,
         uploadDate: new Date(newRecordData.created_at).toLocaleDateString(),
         patientId: newRecordData.patient_id,
-        uploadedBy: newRecordData.uploaded_by || 'You',
+        uploadedBy: (newRecordData as any).uploaded_by || 'You',
         fileUrl: '', // Optional: call getRecordDownloadUrl(newRecordData.storage_path)
       };
 

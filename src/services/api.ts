@@ -280,14 +280,33 @@ export async function getRecordDownloadUrl(storagePath: string): Promise<string>
 }
 
 export async function deleteRecord(recordId: string): Promise<void> {
+  console.log('🗑️ Attempting to delete record with ID:', recordId, 'Type:', typeof recordId);
+  
   // First get the record to find the storage path
   const { data: record, error: fetchError } = await supabase
     .from('patient_records')
-    .select('storage_path')
+    .select('storage_path, id, patient_id, title')
     .eq('id', recordId)
     .single();
 
-  if (fetchError) throw fetchError;
+  console.log('🗑️ Found record:', record, 'Fetch error:', fetchError);
+
+  // If we can't find the record, it might already be deleted or not exist
+  if (fetchError) {
+    console.log('🗑️ Could not fetch record for deletion. Error:', fetchError);
+    // Don't throw error if record doesn't exist - it's already "deleted"
+    if (fetchError.code === 'PGRST116') {
+      console.log('🗑️ Record not found - treating as already deleted');
+      return;
+    }
+    throw fetchError;
+  }
+
+  // Debug patient_id vs auth.uid()
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  console.log('🗑️ Current user ID:', userData?.user?.id);
+  console.log('🗑️ Record patient_id:', record.patient_id);
+  console.log('🗑️ IDs match:', userData?.user?.id === record.patient_id);
 
   // Delete from storage if path exists
   if (record.storage_path) {
@@ -295,16 +314,29 @@ export async function deleteRecord(recordId: string): Promise<void> {
       .from('records')
       .remove([record.storage_path]);
     
+    console.log('🗑️ Storage deletion result:', storageError);
     if (storageError) console.warn('Storage deletion failed:', storageError);
   }
 
   // Delete from database
-  const { error: deleteError } = await supabase
+  const { data: deletedRows, error: deleteError } = await supabase
     .from('patient_records')
     .delete()
-    .eq('id', recordId);
+    .eq('id', recordId)
+    .select();
+
+  console.log('🗑️ Delete result:', deletedRows, 'Delete error:', deleteError);
 
   if (deleteError) throw deleteError;
+
+  // Verify deletion
+  const { data: checkRecord, error: checkError } = await supabase
+    .from('patient_records')
+    .select('id')
+    .eq('id', recordId)
+    .single();
+  
+  console.log('🗑️ Post-delete check:', checkRecord, 'Check error:', checkError);
 }
 
 // ==================== Access Permissions ====================

@@ -142,24 +142,54 @@ const PatientDashboard: React.FC = () => {
     };
 
     const handleDeleteRecord = async (record: MedicalRecord) => {
+        console.log('🗑️ Dashboard: Delete button clicked for record:', record);
         setRecordToDelete(record);
         setIsDeleteModalOpen(true);
+        console.log('🗑️ Dashboard: Delete modal should be opening...');
     };
 
     const confirmDeleteRecord = async () => {
-        if (!recordToDelete) return;
+        console.log('🗑️ Dashboard: confirmDeleteRecord called');
+        console.log('🗑️ Dashboard: recordToDelete:', recordToDelete);
+        
+        if (!recordToDelete) {
+            console.log('🗑️ Dashboard: No record to delete, returning early');
+            return;
+        }
 
         try {
+            console.log('🗑️ Dashboard: Attempting to delete record:', recordToDelete);
+            console.log('🗑️ Dashboard: About to call api.deleteRecord with ID:', recordToDelete.id);
+            console.log('🗑️ Dashboard: api object:', api);
+            console.log('🗑️ Dashboard: api.deleteRecord function:', api.deleteRecord);
+            
             await api.deleteRecord(recordToDelete.id);
             
-            // Remove the record from the local state
-            setRecords(prev => prev.filter(r => r.id !== recordToDelete.id));
+            console.log('🗑️ Dashboard: api.deleteRecord completed successfully');
+            console.log('🗑️ Dashboard: Record deleted, refreshing from database...');
+            // Force DB refresh instead of just updating local state
+            const data = await api.getMyRecords();
+            console.log('🗑️ Dashboard: Fresh records from DB:', data);
+            
+            // Transform the data to match MedicalRecord type
+            const formattedRecords = data ? data.map(record => ({
+                id: record.id,
+                patientId: record.patient_id,
+                type: record.record_type,
+                name: record.title,
+                uploadDate: new Date(record.created_at).toLocaleDateString(),
+                fileUrl: record.storage_path,
+                uploadedBy: 'You'
+            })) : [];
+
+            setRecords(formattedRecords);
             
             addToast('Record deleted successfully', 'success');
         } catch (error) {
-            console.error('Error deleting record:', error);
+            console.error('🗑️ Dashboard: Error deleting record:', error);
             addToast('Failed to delete record', 'error');
         } finally {
+            console.log('🗑️ Dashboard: Cleaning up modal state');
             setRecordToDelete(null);
         }
     };
