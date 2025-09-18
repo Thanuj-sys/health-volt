@@ -252,10 +252,10 @@ const PatientDashboard: React.FC = () => {
                 <div className="w-full px-4 py-6">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
+                            <h1 className="text-3xl font-bold text-slate-800">
                                 Patient Dashboard
                             </h1>
-                            <p className="text-slate-800 mt-1 font-medium">Manage your medical records and access permissions</p>
+                            <p className="text-slate-700 mt-1 font-medium">Manage your medical records and access permissions</p>
                         </div>
                         <div className="flex gap-3">
                             {activeTab === 'records' && (
@@ -263,7 +263,7 @@ const PatientDashboard: React.FC = () => {
                                     <Button 
                                         onClick={() => setIsUploadVisible(!isUploadVisible)} 
                                         variant="outline"
-                                        className="bg-white hover:bg-slate-50"
+                                        className="bg-white hover:bg-blue-50 border-2 border-blue-500 text-blue-700 hover:border-blue-600 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
                                     >
                                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -272,7 +272,7 @@ const PatientDashboard: React.FC = () => {
                                     </Button>
                                     <Button 
                                         onClick={() => setIsGrantAccessModalOpen(true)}
-                                        className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
+                                        className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200"
                                     >
                                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -412,14 +412,14 @@ const PatientDashboard: React.FC = () => {
                                                 </svg>
                                             </div>
                                             <h3 className="text-xl font-bold text-slate-800 mb-3">No Records Found</h3>
-                                            <p className="text-slate-800 mb-6 leading-relaxed max-w-md mx-auto font-medium">
+                                            <p className="text-slate-700 mb-6 leading-relaxed max-w-md mx-auto font-medium">
                                                 {searchTerm || filterType !== 'All' || filterDate ? 'No records match your search criteria.' : 'You haven\'t uploaded any medical records yet. Upload your first record to get started.'}
                                             </p>
                                             {!searchTerm && filterType === 'All' && !filterDate && (
                                                 <Button 
                                                     onClick={() => setIsUploadVisible(true)}
                                                     size="lg"
-                                                    className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
+                                                    className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                                                 >
                                                     Upload Your First Record
                                                 </Button>

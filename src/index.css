@@ -85,6 +85,11 @@ button {
   background: none;
   font-family: inherit;
   transition: all 0.15s ease-in-out;
+  color: inherit;
+}
+
+button:hover {
+  background-color: transparent;
 }
 
 button:disabled {
@@ -238,15 +243,127 @@ html {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Gradient text utility */
+/* Gradient text utility - Enhanced for better fallback */
 .gradient-text {
   background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  /* Fallback for browsers that don't support background-clip: text */
+  color: var(--slate-800);
 }
 
-/* Animation utilities */
+/* Ensure gradient text has fallback for accessibility */
+@supports not (-webkit-background-clip: text) {
+  .gradient-text {
+    color: var(--slate-800) !important;
+    background: none !important;
+  }
+}
+
+/* Better text contrast for all elements */
+.text-contrast-high {
+  color: var(--slate-800) !important;
+}
+
+.text-contrast-medium {
+  color: var(--slate-700) !important;
+}
+
+.text-contrast-low {
+  color: var(--slate-600) !important;
+}
+
+/* Professional button hover utilities */
+.btn-hover-blue {
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-hover-blue:hover {
+  background-color: rgba(59, 130, 246, 0.05) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+  color: #1d4ed8 !important;
+}
+
+.btn-hover-green {
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-hover-green:hover {
+  background-color: rgba(34, 197, 94, 0.05) !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+  color: #15803d !important;
+}
+
+.btn-hover-red {
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-hover-red:hover {
+  background-color: rgba(239, 68, 68, 0.05) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  color: #dc2626 !important;
+}
+
+/* Prevent any black hover backgrounds */
+button:not(.custom-button):hover {
+  background-color: rgba(148, 163, 184, 0.1) !important;
+}
+
+/* Ensure all Tailwind button styles override defaults */
+.hover\:bg-blue-50:hover {
+  background-color: #eff6ff !important;
+}
+
+.hover\:bg-slate-50:hover {
+  background-color: #f8fafc !important;
+}
+
+.hover\:bg-slate-100:hover {
+  background-color: #f1f5f9 !important;
+}
+
+.hover\:bg-green-50:hover {
+  background-color: #f0fdf4 !important;
+}
+
+.hover\:bg-red-50:hover {
+  background-color: #fef2f2 !important;
+}
+
+/* Enhanced button visibility utilities */
+.btn-primary-enhanced {
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%) !important;
+  color: white !important;
+  border: 2px solid var(--primary-600) !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-primary-enhanced:hover {
+  background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-800) 100%) !important;
+  border-color: var(--primary-700) !important;
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-outline-enhanced {
+  background: white !important;
+  color: var(--primary-700) !important;
+  border: 2px solid var(--primary-500) !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-outline-enhanced:hover {
+  background: var(--primary-50) !important;
+  border-color: var(--primary-600) !important;
+  color: var(--primary-800) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2) !important;
+  transform: translateY(-1px) !important;
+}
 .animate-fade-in {
   animation: fadeIn 0.5s ease-in-out;
 }

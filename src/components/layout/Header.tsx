@@ -88,10 +88,10 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
           </div>
           
           <div>
-            <h1 className="text-xl font-bold gradient-text">
+            <h1 className="text-xl font-bold text-slate-800">
               HealthVolt
             </h1>
-            <p className="text-sm text-slate-500 capitalize">
+            <p className="text-sm text-slate-600 capitalize">
               {user?.role} Portal
             </p>
           </div>
