@@ -59,8 +59,6 @@ export async function signUpHospital(
     specialty?: string;
   }
 ): Promise<{ user: any; needsEmailConfirmation: boolean }> {
-  console.log('signUpHospital called with:', { email, name, hospital_name, license_number });
-  
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
@@ -74,8 +72,6 @@ export async function signUpHospital(
       }
     }
   });
-
-  console.log('signUpHospital auth result:', { authData, authError });
 
   if (authError) throw authError;
   if (!authData.user) throw new Error('User creation failed');
@@ -106,11 +102,8 @@ export async function signOut(): Promise<void> {
 export async function getCurrentUser(): Promise<User | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    console.log('getCurrentUser: No auth user found');
     return null;
   }
-
-  console.log('getCurrentUser: Auth user found:', user.id, user.email);
 
   // Check if user is a patient
   const { data: patient, error: patientError } = await supabase
@@ -119,10 +112,7 @@ export async function getCurrentUser(): Promise<User | null> {
     .eq('auth_user_id', user.id)
     .single();
 
-  console.log('getCurrentUser: Patient query result:', { patient, patientError });
-
   if (patient) {
-    console.log('getCurrentUser: Returning patient user');
     return {
       id: patient.id,
       email: patient.email,
@@ -138,10 +128,7 @@ export async function getCurrentUser(): Promise<User | null> {
     .eq('auth_user_id', user.id)
     .single();
 
-  console.log('getCurrentUser: Hospital query result:', { hospital, hospitalError });
-
   if (hospital) {
-    console.log('getCurrentUser: Returning hospital user');
     return {
       id: hospital.id,
       email: hospital.email,
@@ -150,7 +137,6 @@ export async function getCurrentUser(): Promise<User | null> {
     };
   }
 
-  console.log('getCurrentUser: No profile found for user');
   return null;
 }
 
@@ -231,10 +217,13 @@ export async function uploadRecord(
   const user = await getCurrentUser();
   if (!user) throw new Error('Not authenticated');
 
+  // Use current user ID for patients uploading their own records
+  const actualPatientId = user.role === 'patient' ? user.id : patientId;
+
   // Generate unique file path
   const fileExtension = uploadData.file.name.split('.').pop();
   const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
-  const filePath = `${patientId}/${fileName}`;
+  const filePath = `${actualPatientId}/${fileName}`;
 
   // Upload file to storage
   const { error: uploadError } = await supabase.storage
@@ -245,7 +234,7 @@ export async function uploadRecord(
 
   // Create record in database with appropriate uploader
   const insertData: any = {
-    patient_id: patientId,
+    patient_id: actualPatientId, // Use the corrected patient ID
     record_type: uploadData.recordType,
     title: uploadData.title,
     notes: uploadData.notes,
@@ -280,8 +269,6 @@ export async function getRecordDownloadUrl(storagePath: string): Promise<string>
 }
 
 export async function deleteRecord(recordId: string): Promise<void> {
-  console.log('🗑️ Attempting to delete record with ID:', recordId, 'Type:', typeof recordId);
-  
   // First get the record to find the storage path
   const { data: record, error: fetchError } = await supabase
     .from('patient_records')
@@ -289,24 +276,14 @@ export async function deleteRecord(recordId: string): Promise<void> {
     .eq('id', recordId)
     .single();
 
-  console.log('🗑️ Found record:', record, 'Fetch error:', fetchError);
-
   // If we can't find the record, it might already be deleted or not exist
   if (fetchError) {
-    console.log('🗑️ Could not fetch record for deletion. Error:', fetchError);
     // Don't throw error if record doesn't exist - it's already "deleted"
     if (fetchError.code === 'PGRST116') {
-      console.log('🗑️ Record not found - treating as already deleted');
       return;
     }
     throw fetchError;
   }
-
-  // Debug patient_id vs auth.uid()
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  console.log('🗑️ Current user ID:', userData?.user?.id);
-  console.log('🗑️ Record patient_id:', record.patient_id);
-  console.log('🗑️ IDs match:', userData?.user?.id === record.patient_id);
 
   // Delete from storage if path exists
   if (record.storage_path) {
@@ -314,29 +291,16 @@ export async function deleteRecord(recordId: string): Promise<void> {
       .from('records')
       .remove([record.storage_path]);
     
-    console.log('🗑️ Storage deletion result:', storageError);
     if (storageError) console.warn('Storage deletion failed:', storageError);
   }
 
   // Delete from database
-  const { data: deletedRows, error: deleteError } = await supabase
+  const { error: deleteError } = await supabase
     .from('patient_records')
     .delete()
-    .eq('id', recordId)
-    .select();
-
-  console.log('🗑️ Delete result:', deletedRows, 'Delete error:', deleteError);
+    .eq('id', recordId);
 
   if (deleteError) throw deleteError;
-
-  // Verify deletion
-  const { data: checkRecord, error: checkError } = await supabase
-    .from('patient_records')
-    .select('id')
-    .eq('id', recordId)
-    .single();
-  
-  console.log('🗑️ Post-delete check:', checkRecord, 'Check error:', checkError);
 }
 
 // ==================== Access Permissions ====================
@@ -524,8 +488,6 @@ export async function getPatientsWithAccess(): Promise<AccessPermissionWithDetai
   const hospital = await getCurrentHospital();
   if (!hospital) throw new Error('Not authenticated as hospital');
 
-  console.log('getPatientsWithAccess: Hospital ID:', hospital.id);
-
   try {
     // First try to get data directly from access_permissions table
     const { data: accessData, error: accessError } = await supabase
@@ -533,15 +495,11 @@ export async function getPatientsWithAccess(): Promise<AccessPermissionWithDetai
       .select('*')
       .eq('hospital_id', hospital.id);
 
-    console.log('getPatientsWithAccess: Raw access_permissions data:', { accessData, accessError });
-
     if (accessError) {
-      console.error('getPatientsWithAccess: Error fetching access_permissions:', accessError);
       throw accessError;
     }
 
     if (!accessData || accessData.length === 0) {
-      console.log('getPatientsWithAccess: No access permissions found');
       return [];
     }
 
@@ -559,10 +517,7 @@ export async function getPatientsWithAccess(): Promise<AccessPermissionWithDetai
       return true;
     });
 
-    console.log('getPatientsWithAccess: Filtered access data:', filteredAccess);
-
     if (filteredAccess.length === 0) {
-      console.log('getPatientsWithAccess: No approved access found');
       return [];
     }
 
@@ -608,7 +563,6 @@ export async function getPatientsWithAccess(): Promise<AccessPermissionWithDetai
       }
     }
 
-    console.log('getPatientsWithAccess: Final result:', result);
     return result;
 
   } catch (error) {
