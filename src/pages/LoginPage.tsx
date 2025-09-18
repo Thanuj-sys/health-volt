@@ -11,7 +11,7 @@ const LoginPage: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInAsPatient, signInAsHospital } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +24,12 @@ const LoginPage: React.FC = () => {
     const password = formData.get('password') as string;
 
     try {
-      await signIn(email, password);
+      // Use role-specific signin based on selected tab
+      if (role === 'patient') {
+        await signInAsPatient(email, password);
+      } else {
+        await signInAsHospital(email, password);
+      }
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {

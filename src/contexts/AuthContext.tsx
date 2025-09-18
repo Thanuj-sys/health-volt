@@ -6,6 +6,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signInAsPatient: (email: string, password: string) => Promise<void>;
+  signInAsHospital: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, role: UserRole, name: string) => Promise<{ needsEmailConfirmation: boolean }>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -60,6 +62,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const signInAsPatient = async (email: string, password: string): Promise<void> => {
+    try {
+      setLoading(true);
+      const user = await api.signInAsPatient(email, password);
+      setUser(user);
+    } catch (error) {
+      console.error('Patient sign in failed:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signInAsHospital = async (email: string, password: string): Promise<void> => {
+    try {
+      setLoading(true);
+      const user = await api.signInAsHospital(email, password);
+      setUser(user);
+    } catch (error) {
+      console.error('Hospital sign in failed:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const signUp = async (
     email: string, 
     password: string, 
@@ -106,6 +134,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     loading,
     signIn,
+    signInAsPatient,
+    signInAsHospital,
     signUp,
     signOut,
     refreshUser

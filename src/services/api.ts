@@ -94,6 +94,48 @@ export async function signIn(email: string, password: string): Promise<User> {
   return await getCurrentUser() as User;
 }
 
+export async function signInAsPatient(email: string, password: string): Promise<User> {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) throw error;
+  if (!data.user) throw new Error('Sign in failed');
+
+  const user = await getCurrentUser() as User;
+  
+  // Validate that the user is actually a patient
+  if (user.role !== 'patient') {
+    // Sign out the user since they shouldn't be logged in with wrong role
+    await supabase.auth.signOut();
+    throw new Error('This account is not registered as a patient. Please use the Hospital tab to login.');
+  }
+
+  return user;
+}
+
+export async function signInAsHospital(email: string, password: string): Promise<User> {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) throw error;
+  if (!data.user) throw new Error('Sign in failed');
+
+  const user = await getCurrentUser() as User;
+  
+  // Validate that the user is actually a hospital user
+  if (user.role !== 'hospital') {
+    // Sign out the user since they shouldn't be logged in with wrong role
+    await supabase.auth.signOut();
+    throw new Error('This account is not registered as a hospital/doctor. Please use the Patient tab to login.');
+  }
+
+  return user;
+}
+
 export async function signOut(): Promise<void> {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
