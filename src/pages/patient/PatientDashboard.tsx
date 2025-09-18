@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import * as api from '../../services/api';
 import type { MedicalRecord } from '../../types';
-import { Button, Card, CardContent, CardHeader, CardTitle, SearchInput, Select, Badge, LoadingSpinner, Alert } from '../../components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, SearchInput, Select, Badge, LoadingSpinner, Alert, AnimatedSelect, DatePicker } from '../../components/ui';
 import { ICONS } from '../../constants.tsx';
 import FileUpload from '../../components/FileUpload';
 import GrantAccessModal from '../../components/GrantAccessModal';
@@ -372,30 +372,36 @@ const PatientDashboard: React.FC = () => {
                                         </Badge>
                                     </div>
                                     
-                                    <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <SearchInput
-                                            placeholder="Search records..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                        />
-                                        <Select 
-                                            value={filterType} 
-                                            onChange={(e) => setFilterType(e.target.value)}
-                                            className="select-enhanced"
-                                        >
-                                            <option value="All">All Types</option>
-                                            <option value="Lab Report">Lab Report</option>
-                                            <option value="Imaging">Imaging</option>
-                                            <option value="Prescription">Prescription</option>
-                                            <option value="DICOM">DICOM</option>
-                                            <option value="Note">Note</option>
-                                        </Select>
-                                        <input 
-                                            type="date" 
-                                            value={filterDate} 
-                                            onChange={(e) => setFilterDate(e.target.value)}
-                                            className="flex h-12 w-full rounded-lg border-2 border-slate-200 bg-white px-4 py-3 text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 hover:border-slate-300"
-                                        />
+                                    <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                                        <div className="flex flex-col">
+                                            <SearchInput
+                                                placeholder="Search records..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <AnimatedSelect 
+                                                value={filterType} 
+                                                onValueChange={setFilterType}
+                                                placeholder="Filter by Type"
+                                                options={[
+                                                    { value: 'All', label: 'All Types', icon: 'Heart' },
+                                                    { value: 'Lab Report', label: 'Lab Report', icon: 'Activity' },
+                                                    { value: 'Imaging', label: 'Imaging', icon: 'Brain' },
+                                                    { value: 'Prescription', label: 'Prescription', icon: 'Stethoscope' },
+                                                    { value: 'DICOM', label: 'DICOM', icon: 'Heart' },
+                                                    { value: 'Note', label: 'Note', icon: 'Activity' }
+                                                ]}
+                                            />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <DatePicker 
+                                                value={filterDate} 
+                                                onDateChange={setFilterDate}
+                                                placeholder="Filter from date..."
+                                            />
+                                        </div>
                                     </div>
                                 </CardHeader>
                                 

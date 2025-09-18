@@ -107,9 +107,9 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
           transition={{ delay: 0.3, duration: 0.4 }}
         >
           {/* User info - hidden on mobile */}
-          <div className="hidden sm:block text-right">
-            <p className="font-semibold text-sm text-slate-800">{user?.name}</p>
-            <p className="text-xs text-slate-500 capitalize">{user?.role}</p>
+          <div className="hidden sm:flex flex-col text-right">
+            <p className="font-semibold text-sm text-slate-800 leading-tight">{user?.name}</p>
+            <p className="text-xs text-slate-600 capitalize font-medium">{user?.role}</p>
           </div>
           
           {/* User menu */}
@@ -132,34 +132,80 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
             <AnimatePresence>
               {showUserMenu && (
                 <motion.div 
-                  className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-md rounded-xl shadow-depth border border-white/20 z-50"
-                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  className="absolute right-0 mt-3 w-80 bg-white backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 z-50 overflow-hidden"
+                  initial={{ opacity: 0, scale: 0.9, y: -20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                  transition={{ 
+                    type: "spring",
+                    duration: 0.4,
+                    bounce: 0.3
+                  }}
                 >
-                  <div className="p-1">
-                    {/* User info in dropdown */}
-                    <div className="px-4 py-3 border-b border-slate-200/50">
-                      <p className="font-semibold text-sm text-slate-800">{user?.name}</p>
-                      <p className="text-xs text-slate-500 capitalize">{user?.role}</p>
-                      <p className="text-xs text-slate-400 mt-1">{user?.email}</p>
+                  {/* Professional user card */}
+                  <div className="p-6 bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+                    <div className="flex items-center space-x-4">
+                      <motion.div 
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-white bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 shadow-lg"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.1, type: "spring", bounce: 0.5 }}
+                      >
+                        <span className="text-xl">
+                          {user?.name?.charAt(0)?.toUpperCase()}
+                        </span>
+                      </motion.div>
+                      <div className="flex-1 min-w-0">
+                        <motion.h3 
+                          className="font-bold text-slate-800 text-lg truncate"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.2 }}
+                        >
+                          {user?.name}
+                        </motion.h3>
+                        <motion.p 
+                          className="text-sm text-slate-600 capitalize font-medium"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.25 }}
+                        >
+                          {user?.role} Portal
+                        </motion.p>
+                        <motion.p 
+                          className="text-xs text-slate-500 truncate mt-1"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.3 }}
+                        >
+                          {user?.email}
+                        </motion.p>
+                      </div>
                     </div>
-                    
-                    {/* Logout button */}
+                  </div>
+                  
+                  {/* Professional sign out section */}
+                  <div className="p-4 bg-white">
                     <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.35 }}
                     >
                       <Button
                         variant="ghost"
-                        className="w-full justify-start px-4 py-3 text-left hover:bg-red-50 hover:text-red-600 transition-colors duration-200 rounded-lg m-1"
+                        className="w-full justify-center px-6 py-4 text-center hover:bg-red-50 hover:text-red-600 transition-all duration-300 rounded-xl group font-semibold"
                         onClick={handleLogout}
                       >
-                        <div className="text-slate-500 hover:text-red-500">
-                          {ICONS.logout}
-                        </div>
-                        <span className="ml-3 font-medium">Logout</span>
+                        <motion.div 
+                          className="text-slate-500 group-hover:text-red-500 mr-3"
+                          whileHover={{ scale: 1.1 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                        </motion.div>
+                        <span className="group-hover:text-red-600">Sign Out</span>
                       </Button>
                     </motion.div>
                   </div>

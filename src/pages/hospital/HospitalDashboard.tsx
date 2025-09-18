@@ -79,10 +79,10 @@ const HospitalDashboard: React.FC = () => {
                 <div className="max-w-7xl mx-auto px-6 py-6">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                            <h1 className="text-3xl font-bold text-slate-800">
                                 Hospital Dashboard
                             </h1>
-                            <p className="text-slate-600 mt-1">Manage patient access and view medical records</p>
+                            <p className="text-slate-700 mt-1 font-medium">Manage patient access and view medical records</p>
                         </div>
                         <Button 
                             onClick={() => setShowRequestModal(true)}
@@ -120,15 +120,15 @@ const HospitalDashboard: React.FC = () => {
                         <CardHeader className="pb-6">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <div>
-                                    <CardTitle className="text-2xl flex items-center gap-3">
+                                    <CardTitle className="text-2xl flex items-center gap-3 text-slate-900">
                                         <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                                             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                             </svg>
                                         </div>
-                                        Patients with Active Access
+                                        <span className="text-slate-900">Patients with Active Access</span>
                                     </CardTitle>
-                                    <CardDescription className="mt-2">
+                                    <CardDescription className="mt-2 text-slate-700 font-medium">
                                         The following patients have granted you access to their medical records.
                                     </CardDescription>
                                 </div>
@@ -159,7 +159,7 @@ const HospitalDashboard: React.FC = () => {
                                         </svg>
                                     </div>
                                     <h3 className="text-xl font-bold text-slate-800 mb-3">No Patients Found</h3>
-                                    <p className="text-slate-600 mb-6 leading-relaxed max-w-md mx-auto">
+                                    <p className="text-slate-700 mb-6 leading-relaxed max-w-md mx-auto font-medium">
                                         {searchTerm ? 'No patients match your search criteria.' : 'No patients have granted you access yet. Request access to start viewing patient records.'}
                                     </p>
                                     {!searchTerm && (
@@ -192,7 +192,7 @@ const HospitalDashboard: React.FC = () => {
                                                                 </div>
                                                                 <div>
                                                                     <h4 className="font-bold text-slate-900">{permission.patient_name}</h4>
-                                                                    <p className="text-sm text-slate-600">{permission.patient_email}</p>
+                                                                    <p className="text-sm text-slate-700 font-medium">{permission.patient_email}</p>
                                                                 </div>
                                                             </div>
                                                             <Badge variant="success" className="text-xs">
@@ -204,12 +204,12 @@ const HospitalDashboard: React.FC = () => {
                                                     <CardContent className="pt-0">
                                                         <div className="space-y-3">
                                                             <div className="flex justify-between text-sm">
-                                                                <span className="text-slate-600">Access Granted:</span>
-                                                                <span className="font-medium">{new Date(permission.created_at).toLocaleDateString()}</span>
+                                                                <span className="text-slate-700 font-medium">Access Granted:</span>
+                                                                <span className="font-semibold text-slate-900">{new Date(permission.created_at).toLocaleDateString()}</span>
                                                             </div>
                                                             <div className="flex justify-between text-sm">
-                                                                <span className="text-slate-600">Expires:</span>
-                                                                <span className="font-medium">
+                                                                <span className="text-slate-700 font-medium">Expires:</span>
+                                                                <span className="font-semibold text-slate-900">
                                                                     {permission.expires_at 
                                                                         ? new Date(permission.expires_at).toLocaleDateString()
                                                                         : 'No expiry'
