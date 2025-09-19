@@ -44,6 +44,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Auth check failed:', error);
       setUser(null);
+      // Clear any invalid session data
+      localStorage.removeItem('supabase-auth-token');
+      // Clear Supabase session if it exists
+      try {
+        const { supabase } = await import('../lib/supabase');
+        await supabase.auth.signOut();
+      } catch (supabaseError) {
+        console.error('Failed to clear Supabase session:', supabaseError);
+      }
     } finally {
       setLoading(false);
     }

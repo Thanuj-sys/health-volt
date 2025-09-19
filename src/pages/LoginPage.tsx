@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../contexts/ThemeContext';
 import type { UserRole } from '../types';
 import { Button, Input, Label, Card, CardContent, CardHeader, CardTitle, Alert, LoadingSpinner } from '../components/ui';
 
@@ -12,6 +13,7 @@ const LoginPage: React.FC = () => {
   const [success, setSuccess] = useState('');
 
   const { signIn, signUp, signInAsPatient, signInAsHospital } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,8 +88,33 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+    <div className={`min-h-screen transition-all duration-300 flex items-center justify-center p-4 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800' 
+        : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
+    }`}>
       <div className="max-w-md w-full">
+        {/* Theme Toggle - positioned like landing page */}
+        <motion.button
+          onClick={toggleTheme}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className={`fixed top-6 right-6 z-50 p-3 rounded-full shadow-lg transition-all duration-300 ${
+            isDarkMode 
+              ? 'bg-slate-800 hover:bg-slate-700 text-yellow-400' 
+              : 'bg-white hover:bg-slate-50 text-slate-800'
+          }`}
+        >
+          {isDarkMode ? (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          )}
+        </motion.button>
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -99,10 +126,14 @@ const LoginPage: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-1">
+          <h1 className={`text-2xl font-bold mb-1 ${
+            isDarkMode ? 'text-white' : 'text-slate-800'
+          }`}>
             HealthVolt
           </h1>
-          <p className="text-slate-600 text-sm">
+          <p className={`text-sm ${
+            isDarkMode ? 'text-slate-300' : 'text-slate-600'
+          }`}>
             Smart Health Records - Secure Medical Data Management
           </p>
         </motion.div>
@@ -112,19 +143,29 @@ const LoginPage: React.FC = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Card className="border-0 shadow-xl bg-white/95 backdrop-blur-sm">
-            <CardHeader className="text-center pb-4 bg-gradient-to-b from-slate-50 to-white rounded-t-lg">
+          <Card className={`border-0 shadow-xl backdrop-blur-sm ${
+            isDarkMode 
+              ? 'bg-slate-800/95 border-slate-600' 
+              : 'bg-white/95 border-slate-200'
+          }`}>
+            <CardHeader className={`text-center pb-4 rounded-t-lg ${
+              isDarkMode 
+                ? 'bg-gradient-to-b from-slate-700 to-slate-800' 
+                : 'bg-gradient-to-b from-slate-50 to-white'
+            }`}>
 
-                      <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-          className="text-center mb-4"
-        >
-          <h3 className="text-lg font-bold text-slate-800">
-            {mode === 'login' ? 'Sign in to your account' : 'Create your account'}
-          </h3>
-        </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+                className="text-center mb-4"
+              >
+                <h3 className={`text-lg font-bold ${
+                  isDarkMode ? 'text-white' : 'text-slate-800'
+                }`}>
+                  {mode === 'login' ? 'Sign in to your account' : 'Create your account'}
+                </h3>
+              </motion.div>
         
               {/* Role Selection */}
               <div className="flex justify-center space-x-2">
@@ -213,7 +254,9 @@ const LoginPage: React.FC = () => {
                   >
                     <div className="space-y-3">
                       <div>
-                        <Label htmlFor="email" className="text-slate-700 font-medium">Email address</Label>
+                        <Label htmlFor="email" className={`font-medium ${
+                          isDarkMode ? 'text-slate-200' : 'text-slate-700'
+                        }`}>Email address</Label>
                         <Input
                           id="email"
                           name="email"
@@ -221,11 +264,17 @@ const LoginPage: React.FC = () => {
                           autoComplete="email"
                           required
                           placeholder="Enter your email"
-                          className="mt-1 text-slate-900 bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                          className={`mt-1 transition-all duration-200 ${
+                            isDarkMode 
+                              ? 'text-white bg-slate-700 border-slate-600 focus:border-blue-400 focus:ring-blue-400 placeholder:text-slate-400' 
+                              : 'text-slate-900 bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500'
+                          }`}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="password" className="text-slate-700 font-medium">Password</Label>
+                        <Label htmlFor="password" className={`font-medium ${
+                          isDarkMode ? 'text-slate-200' : 'text-slate-700'
+                        }`}>Password</Label>
                         <Input
                           id="password"
                           name="password"
@@ -233,7 +282,11 @@ const LoginPage: React.FC = () => {
                           autoComplete="current-password"
                           required
                           placeholder="Enter your password"
-                          className="mt-1 text-slate-900 bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                          className={`mt-1 transition-all duration-200 ${
+                            isDarkMode 
+                              ? 'text-white bg-slate-700 border-slate-600 focus:border-blue-400 focus:ring-blue-400 placeholder:text-slate-400' 
+                              : 'text-slate-900 bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500'
+                          }`}
                         />
                       </div>
                     </div>
@@ -270,7 +323,9 @@ const LoginPage: React.FC = () => {
                   >
                     <div className="space-y-3">
                       <div>
-                        <Label htmlFor="name" className="text-slate-700 font-medium">
+                        <Label htmlFor="name" className={`font-medium ${
+                          isDarkMode ? 'text-slate-200' : 'text-slate-700'
+                        }`}>
                           {role === 'patient' ? 'Full Name' : 'Contact Name'}
                         </Label>
                         <Input
@@ -279,7 +334,11 @@ const LoginPage: React.FC = () => {
                           type="text"
                           required
                           placeholder={role === 'patient' ? 'Your full name' : 'Contact person name'}
-                          className="mt-1 text-slate-900 bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                          className={`mt-1 transition-all duration-200 ${
+                            isDarkMode 
+                              ? 'text-white bg-slate-700 border-slate-600 focus:border-blue-400 focus:ring-blue-400 placeholder:text-slate-400' 
+                              : 'text-slate-900 bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500'
+                          }`}
                         />
                       </div>
 
@@ -292,25 +351,37 @@ const LoginPage: React.FC = () => {
                             className="space-y-3"
                           >
                             <div>
-                              <Label htmlFor="hospitalName" className="text-slate-700 font-medium">Hospital Name</Label>
+                              <Label htmlFor="hospitalName" className={`font-medium ${
+                                isDarkMode ? 'text-slate-200' : 'text-slate-700'
+                              }`}>Hospital Name</Label>
                               <Input
                                 id="hospitalName"
                                 name="hospitalName"
                                 type="text"
                                 required
                                 placeholder="Hospital/Clinic name"
-                                className="mt-1 text-slate-900 bg-white border-slate-300 focus:border-emerald-500 focus:ring-emerald-500"
+                                className={`mt-1 transition-all duration-200 ${
+                                  isDarkMode 
+                                    ? 'text-white bg-slate-700 border-slate-600 focus:border-emerald-400 focus:ring-emerald-400 placeholder:text-slate-400' 
+                                    : 'text-slate-900 bg-white border-slate-300 focus:border-emerald-500 focus:ring-emerald-500'
+                                }`}
                               />
                             </div>
                             <div>
-                              <Label htmlFor="licenseNumber" className="text-slate-700 font-medium">License Number</Label>
+                              <Label htmlFor="licenseNumber" className={`font-medium ${
+                                isDarkMode ? 'text-slate-200' : 'text-slate-700'
+                              }`}>License Number</Label>
                               <Input
                                 id="licenseNumber"
                                 name="licenseNumber"
                                 type="text"
                                 required
                                 placeholder="Medical license number"
-                                className="mt-1 text-slate-900 bg-white border-slate-300 focus:border-emerald-500 focus:ring-emerald-500"
+                                className={`mt-1 transition-all duration-200 ${
+                                  isDarkMode 
+                                    ? 'text-white bg-slate-700 border-slate-600 focus:border-emerald-400 focus:ring-emerald-400 placeholder:text-slate-400' 
+                                    : 'text-slate-900 bg-white border-slate-300 focus:border-emerald-500 focus:ring-emerald-500'
+                                }`}
                               />
                             </div>
                           </motion.div>
@@ -318,7 +389,9 @@ const LoginPage: React.FC = () => {
                       </AnimatePresence>
 
                       <div>
-                        <Label htmlFor="email" className="text-slate-700 font-medium">Email address</Label>
+                        <Label htmlFor="email" className={`font-medium ${
+                          isDarkMode ? 'text-slate-200' : 'text-slate-700'
+                        }`}>Email address</Label>
                         <Input
                           id="email"
                           name="email"
@@ -326,29 +399,45 @@ const LoginPage: React.FC = () => {
                           autoComplete="email"
                           required
                           placeholder="Enter your email"
-                          className="mt-1 text-slate-900 bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                          className={`mt-1 transition-all duration-200 ${
+                            isDarkMode 
+                              ? 'text-white bg-slate-700 border-slate-600 focus:border-blue-400 focus:ring-blue-400 placeholder:text-slate-400' 
+                              : 'text-slate-900 bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500'
+                          }`}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="password" className="text-slate-700 font-medium">Password</Label>
+                        <Label htmlFor="password" className={`font-medium ${
+                          isDarkMode ? 'text-slate-200' : 'text-slate-700'
+                        }`}>Password</Label>
                         <Input
                           id="password"
                           name="password"
                           type="password"
                           required
                           placeholder="Create a password"
-                          className="mt-1 text-slate-900 bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                          className={`mt-1 transition-all duration-200 ${
+                            isDarkMode 
+                              ? 'text-white bg-slate-700 border-slate-600 focus:border-blue-400 focus:ring-blue-400 placeholder:text-slate-400' 
+                              : 'text-slate-900 bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500'
+                          }`}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="confirmPassword" className="text-slate-700 font-medium">Confirm Password</Label>
+                        <Label htmlFor="confirmPassword" className={`font-medium ${
+                          isDarkMode ? 'text-slate-200' : 'text-slate-700'
+                        }`}>Confirm Password</Label>
                         <Input
                           id="confirmPassword"
                           name="confirmPassword"
                           type="password"
                           required
                           placeholder="Confirm your password"
-                          className="mt-1 text-slate-900 bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                          className={`mt-1 transition-all duration-200 ${
+                            isDarkMode 
+                              ? 'text-white bg-slate-700 border-slate-600 focus:border-blue-400 focus:ring-blue-400 placeholder:text-slate-400' 
+                              : 'text-slate-900 bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500'
+                          }`}
                         />
                       </div>
                     </div>
@@ -376,7 +465,9 @@ const LoginPage: React.FC = () => {
                 )}
               </AnimatePresence>
 
-              <div className="text-center mt-6 pt-4 border-t border-slate-200">
+              <div className={`text-center mt-6 pt-4 border-t transition-colors duration-200 ${
+                isDarkMode ? 'border-slate-600' : 'border-slate-200'
+              }`}>
                 <Button
                   type="button"
                   variant="ghost"
@@ -385,7 +476,11 @@ const LoginPage: React.FC = () => {
                     setError('');
                     setSuccess('');
                   }}
-                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium transition-all duration-200 text-sm"
+                  className={`font-medium transition-all duration-200 text-sm ${
+                    isDarkMode 
+                      ? 'text-blue-400 hover:text-blue-300 hover:bg-slate-700' 
+                      : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'
+                  }`}
                 >
                   {mode === 'login' 
                     ? "Don't have an account? Sign up" 
@@ -400,9 +495,15 @@ const LoginPage: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="text-center text-slate-600 mt-4"
+          className={`text-center mt-4 ${
+            isDarkMode ? 'text-slate-300' : 'text-slate-600'
+          }`}
         >
-          <div className="bg-white/60 backdrop-blur-sm rounded-lg px-3 py-2 inline-block shadow-sm text-xs">
+          <div className={`backdrop-blur-sm rounded-lg px-3 py-2 inline-block shadow-sm text-xs transition-all duration-200 ${
+            isDarkMode 
+              ? 'bg-slate-800/60 border border-slate-600' 
+              : 'bg-white/60'
+          }`}>
             🔒 Secure • 🏥 HIPAA Compliant • 🔐 End-to-End Encrypted
           </div>
         </motion.div>

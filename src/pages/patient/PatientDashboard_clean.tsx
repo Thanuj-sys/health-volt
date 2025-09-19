@@ -78,22 +78,15 @@ const PatientDashboard: React.FC = () => {
 
     // Helper functions
     const getRecordTypeIcon = (type: string | undefined) => {
-        const iconClass = "w-5 h-5 text-current";
-        
-        switch (type) {
-            case 'Lab Report':
-                return <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>;
-            case 'Imaging':
-                return <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>;
-            case 'Prescription':
-                return <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M6.16 6.16c.195-.195.451-.293.707-.293.256 0 .512.098.707.293L12 10.586l4.42-4.42c.195-.195.451-.293.707-.293.256 0 .512.098.707.293.391.391.391 1.023 0 1.414L13.414 12l4.42 4.42c.391.391.391 1.023 0 1.414-.195.195-.451.293-.707.293-.256 0-.512-.098-.707-.293L12 13.414l-4.42 4.42c-.195.195-.451.293-.707.293-.256 0-.512-.098-.707-.293-.391-.391-.391-1.023 0-1.414L10.586 12 6.16 7.58c-.391-.391-.391-1.023 0-1.414z"/></svg>;
-            case 'DICOM':
-                return <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>;
-            case 'Note':
-                return <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>;
-            default:
-                return <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>;
-        }
+        const icons: Record<string, string> = {
+            'Lab Report': '🧪',
+            'Imaging': '🔬',
+            'Prescription': '💊',
+            'DICOM': '📋',
+            'Note': '📝',
+            'Other': '📄'
+        };
+        return icons[type || 'Other'] || '📄';
     };
 
     const handleUploadSuccess = (newRecord: PatientRecord) => {
@@ -335,17 +328,10 @@ const PatientDashboard: React.FC = () => {
 </head>
 <body>
     <div class="header">
-        <h1>
-            <svg style="width: 24px; height: 24px; display: inline-block; margin-right: 8px; vertical-align: middle;" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-            </svg>
-            ${record.title}
-        </h1>
+        <h1>📄 ${record.title}</h1>
         <div class="header-info">
             <div class="info-item">
-                <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-3V2h-2v2H8V2H6v2H3c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h14c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1z"/>
-                </svg>
+                <span>📅</span>
                 <span>${record.created_at ? new Date(record.created_at).toLocaleDateString('en-US', { 
                     year: 'numeric', 
                     month: 'long', 
@@ -356,16 +342,11 @@ const PatientDashboard: React.FC = () => {
                 <span class="badge">${record.record_type}</span>
             </div>
             <div class="info-item">
-                <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M10 4H4c-1.1 0-2 .9-2 2v3h2V6h6V4zm6 2v2h4V4h-6c1.1 0 2 .9 2 2zM4 10H2v6c0 1.1.9 2 2 2h6v-2H4V10zm16 0h-2v6h-6v2h6c1.1 0 2-.9 2-2V10z"/>
-                </svg>
+                <span>📁</span>
                 <span>${fileName}</span>
             </div>
             <a href="${fileUrl}" download="${fileName}" class="download-btn">
-                <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                </svg>
-                Download
+                ⬇️ Download
             </a>
         </div>
     </div>
@@ -407,9 +388,7 @@ const PatientDashboard: React.FC = () => {
         function showError() {
             document.getElementById('loading').innerHTML = \`
                 <div style="text-align: center;">
-                    <svg style="width: 48px; height: 48px; color: #ef4444; margin-bottom: 16px;" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                    </svg>
+                    <span style="font-size: 2rem;">⚠️</span>
                     <p>Unable to load the file.</p>
                     <p style="font-size: 0.9rem; margin-top: 8px;">
                         <a href="${fileUrl}" download="${fileName}" style="color: #3b82f6;">
@@ -457,35 +436,25 @@ const PatientDashboard: React.FC = () => {
 
         // Helper function to get file icon
         const getFileIcon = (extension: string | undefined) => {
-            const iconStyle = "width: 64px; height: 64px; color: #6b7280;";
-            
-            switch (extension) {
-                case 'dcm':
-                case 'dicom':
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>`;
-                case 'doc':
-                case 'docx':
-                case 'txt':
-                case 'rtf':
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
-                case 'xls':
-                case 'xlsx':
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>`;
-                case 'ppt':
-                case 'pptx':
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
-                case 'zip':
-                case 'rar':
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-2 .9-2 2v3h2V6h6V4zm6 2v2h4V4h-6c1.1 0 2 .9 2 2zM4 10H2v6c0 1.1.9 2 2 2h6v-2H4V10zm16 0h-2v6h-6v2h6c1.1 0 2-.9 2-2V10z"/></svg>`;
-                case 'mp4':
-                case 'avi':
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
-                case 'wav':
-                case 'mp3':
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`;
-                default:
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
-            }
+            const icons: { [key: string]: string } = {
+                'dcm': '🏥',
+                'dicom': '🏥',
+                'doc': '📄',
+                'docx': '📄',
+                'txt': '📝',
+                'rtf': '📝',
+                'xls': '📊',
+                'xlsx': '📊',
+                'ppt': '📋',
+                'pptx': '📋',
+                'zip': '📦',
+                'rar': '📦',
+                'mp4': '🎥',
+                'avi': '🎥',
+                'wav': '🎵',
+                'mp3': '🎵'
+            };
+            return icons[extension || ''] || '📄';
         };
         
         const htmlContent = `
@@ -637,17 +606,10 @@ const PatientDashboard: React.FC = () => {
 </head>
 <body>
     <div class="header">
-        <h1>
-            <svg style="width: 24px; height: 24px; display: inline-block; margin-right: 8px; vertical-align: middle;" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-            </svg>
-            ${record.title}
-        </h1>
+        <h1>📄 ${record.title}</h1>
         <div class="header-info">
             <div class="info-item">
-                <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-3V2h-2v2H8V2H6v2H3c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h14c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1z"/>
-                </svg>
+                <span>📅</span>
                 <span>${record.created_at ? new Date(record.created_at).toLocaleDateString('en-US', { 
                     year: 'numeric', 
                     month: 'long', 
@@ -658,9 +620,7 @@ const PatientDashboard: React.FC = () => {
                 <span class="badge">${record.record_type}</span>
             </div>
             <div class="info-item">
-                <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M10 4H4c-1.1 0-2 .9-2 2v3h2V6h6V4zm6 2v2h4V4h-6c1.1 0 2 .9 2 2zM4 10H2v6c0 1.1.9 2 2 2h6v-2H4V10zm16 0h-2v6h-6v2h6c1.1 0 2-.9 2-2V10z"/>
-                </svg>
+                <span>📁</span>
                 <span>${fileName}</span>
             </div>
         </div>
@@ -680,32 +640,20 @@ const PatientDashboard: React.FC = () => {
             
             ${fileExtension === 'dcm' || fileExtension === 'dicom' ? `
                 <div class="special-note">
-                    <svg style="width: 20px; height: 20px; display: inline-block; margin-right: 8px; vertical-align: middle;" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                    </svg>
-                    This is a DICOM medical imaging file. For best viewing experience, 
+                    📱 This is a DICOM medical imaging file. For best viewing experience, 
                     download and open with specialized medical imaging software.
                 </div>
             ` : ''}
             
             <div class="actions">
                 <a href="${fileUrl}" download="${fileName}" class="btn btn-primary">
-                    <svg style="width: 16px; height: 16px; margin-right: 8px;" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                    </svg>
-                    Download File
+                    ⬬ Download File
                 </a>
                 <a href="${fileUrl}" target="_blank" class="btn btn-secondary">
-                    <svg style="width: 16px; height: 16px; margin-right: 8px;" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
-                    </svg>
-                    Open in Browser
+                    🔗 Open in Browser
                 </a>
                 <button onclick="window.close()" class="btn btn-secondary">
-                    <svg style="width: 16px; height: 16px; margin-right: 8px;" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                    </svg>
-                    Close
+                    ✕ Close
                 </button>
             </div>
         </div>
@@ -864,21 +812,13 @@ const PatientDashboard: React.FC = () => {
 <body>
     <div class="container">
         <div class="header">
-            <h1>
-                <svg style="width: 32px; height: 32px; display: inline-block; margin-right: 12px; vertical-align: middle;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                </svg>
-                ${record.title}
-            </h1>
+            <h1>📋 ${record.title}</h1>
             <p>Medical Record Details</p>
         </div>
         
         <div class="content">
             <div class="no-file-notice">
-                <svg style="width: 24px; height: 24px; display: inline-block; margin-right: 8px; vertical-align: middle;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                </svg>
-                This record contains information only - no file attachment available
+                📄 This record contains information only - no file attachment available
             </div>
             
             <div class="detail-grid">
@@ -916,10 +856,7 @@ const PatientDashboard: React.FC = () => {
             </div>
             
             <button onclick="window.close()" class="close-btn">
-                <svg style="width: 20px; height: 20px; display: inline-block; margin-right: 8px; vertical-align: middle;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-                Close Window
+                ✕ Close Window
             </button>
         </div>
     </div>
@@ -1028,9 +965,7 @@ const PatientDashboard: React.FC = () => {
                                             : 'bg-black hover:bg-gray-800 text-white shadow-lg shadow-gray-900/25'
                                     }`}
                                 >
-                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
-                                    </svg>
+                                    <span className="mr-2">📤</span>
                                     Upload Record
                                 </Button>
                                 <Button
@@ -1042,9 +977,7 @@ const PatientDashboard: React.FC = () => {
                                             : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                                     }`}
                                 >
-                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-                                    </svg>
+                                    <span className="mr-2">🔐</span>
                                     Grant Access
                                 </Button>
                             </motion.div>
@@ -1066,11 +999,7 @@ const PatientDashboard: React.FC = () => {
                                     }`}
                                     whileHover={{ scale: 1.05 }}
                                 >
-                                    <div className="text-3xl mb-2">
-                                        <svg className="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
-                                        </svg>
-                                    </div>
+                                    <div className="text-3xl mb-2">📊</div>
                                     <div className={`text-2xl font-bold ${
                                         isDarkMode ? 'text-white' : 'text-gray-900'
                                     }`}>
@@ -1091,11 +1020,7 @@ const PatientDashboard: React.FC = () => {
                                     }`}
                                     whileHover={{ scale: 1.05 }}
                                 >
-                                    <div className="text-3xl mb-2">
-                                        <svg className="w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-                                        </svg>
-                                    </div>
+                                    <div className="text-3xl mb-2">🔒</div>
                                     <div className={`text-2xl font-bold ${
                                         isDarkMode ? 'text-white' : 'text-gray-900'
                                     }`}>
@@ -1116,11 +1041,7 @@ const PatientDashboard: React.FC = () => {
                                     }`}
                                     whileHover={{ scale: 1.05 }}
                                 >
-                                    <div className="text-3xl mb-2">
-                                        <svg className="w-8 h-8 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                                        </svg>
-                                    </div>
+                                    <div className="text-3xl mb-2">⚡</div>
                                     <div className={`text-2xl font-bold ${
                                         isDarkMode ? 'text-white' : 'text-gray-900'
                                     }`}>
@@ -1141,11 +1062,7 @@ const PatientDashboard: React.FC = () => {
                                     }`}
                                     whileHover={{ scale: 1.05 }}
                                 >
-                                    <div className="text-3xl mb-2">
-                                        <svg className="w-8 h-8 text-purple-500" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                                        </svg>
-                                    </div>
+                                    <div className="text-3xl mb-2">🌐</div>
                                     <div className={`text-2xl font-bold ${
                                         isDarkMode ? 'text-white' : 'text-gray-900'
                                     }`}>
@@ -1187,10 +1104,7 @@ const PatientDashboard: React.FC = () => {
                                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                         }`}
                     >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                        </svg>
-                        Medical Records
+                        📋 Medical Records
                         <Badge variant="secondary" className="ml-2">
                             {filteredRecords.length}
                         </Badge>
@@ -1207,10 +1121,7 @@ const PatientDashboard: React.FC = () => {
                                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                         }`}
                     >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-                        </svg>
-                        Access Control
+                        🔐 Access Control
                     </button>
                 </motion.div>
             </div>
@@ -1232,13 +1143,10 @@ const PatientDashboard: React.FC = () => {
                                 isDarkMode ? 'bg-slate-800 border-gray-700' : 'bg-white border-gray-200'
                             }`}>
                                 <CardHeader>
-                                    <CardTitle className={`flex items-center gap-2 ${
+                                    <CardTitle className={`${
                                         isDarkMode ? 'text-white' : 'text-gray-900'
                                     }`}>
-                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                                        </svg>
-                                        Your Medical Records
+                                        📄 Your Medical Records
                                     </CardTitle>
                                     <p className={`${
                                         isDarkMode ? 'text-gray-400' : 'text-gray-600'
@@ -1263,13 +1171,13 @@ const PatientDashboard: React.FC = () => {
                                             onValueChange={setFilterType}
                                             placeholder="All Types"
                                             options={[
-                                                { value: 'All', label: 'All Types' },
-                                                { value: 'Lab Report', label: 'Lab Report' },
-                                                { value: 'Imaging', label: 'Imaging' },
-                                                { value: 'Prescription', label: 'Prescription' },
-                                                { value: 'DICOM', label: 'DICOM' },
-                                                { value: 'Note', label: 'Note' },
-                                                { value: 'Other', label: 'Other' }
+                                                { value: 'All', label: '❤️ All Types' },
+                                                { value: 'Lab Report', label: '🧪 Lab Report' },
+                                                { value: 'Imaging', label: '🔬 Imaging' },
+                                                { value: 'Prescription', label: '💊 Prescription' },
+                                                { value: 'DICOM', label: '📋 DICOM' },
+                                                { value: 'Note', label: '📝 Note' },
+                                                { value: 'Other', label: '📄 Other' }
                                             ]}
                                             className={`${
                                                 isDarkMode 
@@ -1306,11 +1214,7 @@ const PatientDashboard: React.FC = () => {
                                         isDarkMode ? 'border-gray-700' : 'border-gray-200'
                                     }`}
                                 >
-                                    <div className="text-6xl mb-4 flex justify-center">
-                                        <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                                        </svg>
-                                    </div>
+                                    <div className="text-6xl mb-4">📋</div>
                                     <h3 className={`text-xl font-semibold mb-2 ${
                                         isDarkMode ? 'text-white' : 'text-gray-900'
                                     }`}>
@@ -1329,9 +1233,7 @@ const PatientDashboard: React.FC = () => {
                                                 : 'bg-black hover:bg-gray-800'
                                         } text-white`}
                                     >
-                                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
-                                        </svg>
+                                        <span className="mr-2">📤</span>
                                         Upload Your First Record
                                     </Button>
                                 </motion.div>
@@ -1419,10 +1321,7 @@ const PatientDashboard: React.FC = () => {
                                                     }`}
                                                     size="sm"
                                                 >
-                                                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                                                    </svg>
-                                                    Download
+                                                    📥 Download
                                                 </Button>
                                                 <Button
                                                     onClick={() => handleViewRecord(record)}
@@ -1434,10 +1333,7 @@ const PatientDashboard: React.FC = () => {
                                                     }`}
                                                     size="sm"
                                                 >
-                                                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                                                    </svg>
-                                                    View
+                                                    👁️ View
                                                 </Button>
                                             </div>
                                         </motion.div>
@@ -1482,13 +1378,10 @@ const PatientDashboard: React.FC = () => {
                                 isDarkMode ? 'border-gray-700' : 'border-gray-200'
                             }`}>
                                 <div className="flex items-center justify-between">
-                                    <h2 className={`text-2xl font-bold flex items-center gap-2 ${
+                                    <h2 className={`text-2xl font-bold ${
                                         isDarkMode ? 'text-white' : 'text-gray-900'
                                     }`}>
-                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
-                                        </svg>
-                                        Upload Medical Record
+                                        📤 Upload Medical Record
                                     </h2>
                                     <Button
                                         onClick={() => setIsUploadVisible(false)}
@@ -1498,9 +1391,7 @@ const PatientDashboard: React.FC = () => {
                                             isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                     >
-                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                                        </svg>
+                                        ✕
                                     </Button>
                                 </div>
                             </div>
