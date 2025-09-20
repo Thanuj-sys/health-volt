@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../contexts/ThemeContext';
 import type { UserRole } from '../types';
 import { Button, Input, Label, Card, CardContent, CardHeader, CardTitle, Alert, LoadingSpinner } from '../components/ui';
 
 const LoginPage: React.FC = () => {
+  const location = useLocation();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [role, setRole] = useState<UserRole>('patient');
   const [loading, setLoading] = useState(false);
@@ -14,6 +16,15 @@ const LoginPage: React.FC = () => {
 
   const { signIn, signUp, signInAsPatient, signInAsHospital } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
+
+  // Check navigation state for initial mode
+  useEffect(() => {
+    if (location.state?.mode === 'signup') {
+      setMode('signup');
+    } else if (location.state?.mode === 'login') {
+      setMode('login');
+    }
+  }, [location.state]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,12 +154,12 @@ const LoginPage: React.FC = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Card className={`border-0 shadow-xl backdrop-blur-sm ${
+          <Card className={`border-0 shadow-xl backdrop-blur-sm transition-all duration-300 ${
             isDarkMode 
               ? 'bg-slate-800/95 border-slate-600' 
               : 'bg-white/95 border-slate-200'
           }`}>
-            <CardHeader className={`text-center pb-4 rounded-t-lg ${
+            <CardHeader className={`text-center pb-4 rounded-t-lg transition-all duration-300 ${
               isDarkMode 
                 ? 'bg-gradient-to-b from-slate-700 to-slate-800' 
                 : 'bg-gradient-to-b from-slate-50 to-white'
@@ -160,7 +171,7 @@ const LoginPage: React.FC = () => {
                 transition={{ duration: 0.4, delay: 0.3 }}
                 className="text-center mb-4"
               >
-                <h3 className={`text-lg font-bold ${
+                <h3 className={`text-lg font-bold transition-colors duration-300 ${
                   isDarkMode ? 'text-white' : 'text-slate-800'
                 }`}>
                   {mode === 'login' ? 'Sign in to your account' : 'Create your account'}
@@ -177,7 +188,9 @@ const LoginPage: React.FC = () => {
                   className={`min-w-[100px] font-medium transition-all duration-200 ${
                     role === 'patient' 
                       ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg border-0' 
-                      : 'border-2 border-blue-200 text-blue-700 hover:border-blue-400 hover:bg-blue-50'
+                      : isDarkMode
+                        ? 'border-2 border-blue-400 text-blue-300 hover:border-blue-300 hover:bg-blue-900/50'
+                        : 'border-2 border-blue-200 text-blue-700 hover:border-blue-400 hover:bg-blue-50'
                   }`}
                 >
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,7 +206,9 @@ const LoginPage: React.FC = () => {
                   className={`min-w-[100px] font-medium transition-all duration-200 ${
                     role === 'hospital' 
                       ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg border-0' 
-                      : 'border-2 border-emerald-200 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50'
+                      : isDarkMode
+                        ? 'border-2 border-emerald-400 text-emerald-300 hover:border-emerald-300 hover:bg-emerald-900/50'
+                        : 'border-2 border-emerald-200 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50'
                   }`}
                 >
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,8 +226,12 @@ const LoginPage: React.FC = () => {
                     exit={{ opacity: 0, y: -10 }}
                     className="mb-4"
                   >
-                    <Alert variant="destructive" className="border-red-200 bg-red-50">
-                      <div className="flex items-center text-red-700">
+                    <Alert variant="destructive" className={`transition-all duration-300 ${
+                      isDarkMode 
+                        ? 'border-red-600 bg-red-900/20 text-red-300' 
+                        : 'border-red-200 bg-red-50 text-red-700'
+                    }`}>
+                      <div className="flex items-center">
                         <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -229,8 +248,12 @@ const LoginPage: React.FC = () => {
                     exit={{ opacity: 0, y: -10 }}
                     className="mb-4"
                   >
-                    <Alert variant="success" className="border-green-200 bg-green-50">
-                      <div className="flex items-center text-green-700">
+                    <Alert variant="success" className={`transition-all duration-300 ${
+                      isDarkMode 
+                        ? 'border-green-600 bg-green-900/20 text-green-300' 
+                        : 'border-green-200 bg-green-50 text-green-700'
+                    }`}>
+                      <div className="flex items-center">
                         <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>

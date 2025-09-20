@@ -4,1534 +4,855 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useToast } from '../../hooks/useToast';
 import * as api from '../../services/api';
-import type { PatientRecord } from '../../types';
-import { Button, Card, CardContent, CardHeader, CardTitle, SearchInput, Select, Badge, LoadingSpinner, Alert, AnimatedSelect, DatePicker } from '../../components/ui';
-import { ICONS } from '../../constants.tsx';
+import type { MedicalRecord } from '../../types';
+import { Button, Card, CardContent, CardHeader, CardTitle, LoadingSpinner, SearchInput, Badge, Alert } from '../../components/ui';
 import FileUpload from '../../components/FileUpload';
-import GrantAccessModal from '../../components/GrantAccessModal';
 import AccessRequestsManager from '../../components/AccessRequestsManager';
 import ConfirmDeleteModal from '../../components/ConfirmDeleteModal';
 
 const PatientDashboard: React.FC = () => {
-    const { user } = useAuth();
-    const { isDarkMode } = useTheme();
-    const { addToast } = useToast();
-    const [records, setRecords] = useState<PatientRecord[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [filterType, setFilterType] = useState('All');
-    const [filterDate, setFilterDate] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isUploadVisible, setIsUploadVisible] = useState(false);
-    const [isGrantAccessModalOpen, setIsGrantAccessModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'records' | 'access'>('records');
-    const [error, setError] = useState<string | null>(null);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [recordToDelete, setRecordToDelete] = useState<PatientRecord | null>(null);
+  const { user } = useAuth();
+  const { isDarkMode } = useTheme();
+  const { addToast } = useToast();
+  const [records, setRecords] = useState<MedicalRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeNav, setActiveNav] = useState('dashboard');
+  const [filterType, setFilterType] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isUploadVisible, setIsUploadVisible] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState<MedicalRecord | null>(null);
 
-    // Fetch records
-    useEffect(() => {
-        const fetchRecords = async () => {
-            if (!user?.id) {
-                console.log('No user or user.id found, skipping fetch');
-                setIsLoading(false);
-                return;
-            }
+  // Fetch records on mount
+  useEffect(() => {
+    const fetchRecords = async () => {
+      if (!user) {
+        addToast('Please log in to view your records', 'error');
+        setIsLoading(false);
+        return;
+      }
 
-            try {
-                console.log('Fetching records for user:', user.id);
-                const fetchedRecords = await api.getPatientRecords(user.id);
-                console.log('Fetched records:', fetchedRecords);
-                setRecords(fetchedRecords || []);
-                setError(null);
-            } catch (error) {
-                console.error('Error fetching records:', error);
-                setError('Failed to load medical records');
-                setRecords([]); // Set empty array on error
-                addToast('Failed to load medical records', 'error');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchRecords();
-    }, [user, addToast]);
-
-    // Filter records
-    const filteredRecords = useMemo(() => {
-        // Ensure records is always an array
-        const safeRecords = Array.isArray(records) ? records : [];
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await api.getMyRecords();
         
-        return safeRecords.filter(record => {
-            // Safely handle potentially undefined values - using correct PatientRecord properties
-            const recordTitle = record?.title || '';
-            const recordType = record?.record_type || '';
-            const searchTermSafe = searchTerm || '';
-            
-            const matchesSearch = recordTitle.toLowerCase().includes(searchTermSafe.toLowerCase()) ||
-                                recordType.toLowerCase().includes(searchTermSafe.toLowerCase());
-            const matchesType = filterType === 'All' || recordType === filterType;
-            const matchesDate = !filterDate || (record?.created_at && new Date(record.created_at) >= new Date(filterDate));
-            
-            return matchesSearch && matchesType && matchesDate;
-        });
-    }, [records, searchTerm, filterType, filterDate]);
-
-    // Helper functions
-    const getRecordTypeIcon = (type: string | undefined) => {
-        const iconClass = "w-5 h-5 text-current";
-        
-        switch (type) {
-            case 'Lab Report':
-                return <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>;
-            case 'Imaging':
-                return <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>;
-            case 'Prescription':
-                return <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M6.16 6.16c.195-.195.451-.293.707-.293.256 0 .512.098.707.293L12 10.586l4.42-4.42c.195-.195.451-.293.707-.293.256 0 .512.098.707.293.391.391.391 1.023 0 1.414L13.414 12l4.42 4.42c.391.391.391 1.023 0 1.414-.195.195-.451.293-.707.293-.256 0-.512-.098-.707-.293L12 13.414l-4.42 4.42c-.195.195-.451.293-.707.293-.256 0-.512-.098-.707-.293-.391-.391-.391-1.023 0-1.414L10.586 12 6.16 7.58c-.391-.391-.391-1.023 0-1.414z"/></svg>;
-            case 'DICOM':
-                return <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>;
-            case 'Note':
-                return <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>;
-            default:
-                return <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>;
+        if (!data) {
+          setRecords([]);
+          return;
         }
+
+        // Transform the data to match MedicalRecord type
+        const formattedRecords = data.map(record => ({
+          id: record.id,
+          patientId: record.patient_id,
+          type: record.record_type,
+          name: record.title,
+          uploadDate: new Date(record.created_at).toLocaleDateString(),
+          fileUrl: record.storage_path,
+          uploadedBy: 'You'
+        }));
+
+        setRecords(formattedRecords);
+      } catch (error) {
+        console.error('Error fetching records:', error);
+        setError('Failed to fetch medical records');
+        addToast('Failed to fetch medical records', 'error');
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    const handleUploadSuccess = (newRecord: PatientRecord) => {
-        setRecords(prev => [newRecord, ...prev]);
-        setIsUploadVisible(false);
-        addToast('Medical record uploaded successfully!', 'success');
-    };
+    fetchRecords();
+  }, [user, addToast]);
 
-    const handleDownload = async (record: PatientRecord) => {
-        try {
-            console.log('Downloading record:', record.id);
-            
-            // Check if record has a storage path (actual file)
-            if (!record.storage_path) {
-                addToast('No file available for download', 'error');
-                return;
-            }
-            
-            // Get the signed download URL from Supabase storage
-            const downloadUrl = await api.getRecordDownloadUrl(record.storage_path);
-            
-            // Extract original filename from storage path if possible
-            const pathParts = record.storage_path.split('/');
-            const storageFileName = pathParts[pathParts.length - 1];
-            
-            // Try to get original filename or create a meaningful one
-            const originalExtension = storageFileName.split('.').pop();
-            const sanitizedTitle = record.title?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'medical_record';
-            const filename = `${sanitizedTitle}.${originalExtension}`;
-            
-            // Create a temporary link to trigger download
-            const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.download = filename;
-            link.target = '_blank';
-            
-            // For some file types, we need to fetch and create blob to force download
-            try {
-                const response = await fetch(downloadUrl);
-                if (!response.ok) throw new Error('Failed to fetch file');
-                
-                const blob = await response.blob();
-                const blobUrl = window.URL.createObjectURL(blob);
-                
-                link.href = blobUrl;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                // Clean up blob URL
-                setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
-                
-            } catch (fetchError) {
-                // Fallback: direct download using signed URL
-                console.log('Using direct download fallback');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-            
-            addToast('Record download started!', 'success');
-            
-        } catch (error) {
-            console.error('Error downloading record:', error);
-            addToast('Failed to download record', 'error');
-        }
-    };
+  const filteredRecords = useMemo(() => {
+    return records
+      .filter(record => filterType === 'All' || record.type === filterType)
+      .filter(record => !searchTerm || 
+        record.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.type.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+  }, [records, filterType, searchTerm]);
 
-    const handleViewRecord = async (record: PatientRecord) => {
-        try {
-            console.log('Viewing record:', record.id);
-            
-            // Check if record has a storage path (actual file)
-            if (!record.storage_path) {
-                // Show record details if no file available
-                showRecordDetailsPage(record);
-                return;
-            }
-            
-            // Get the signed URL for viewing the file
-            const viewUrl = await api.getRecordDownloadUrl(record.storage_path);
-            
-            // Get file extension to determine how to display it
-            const fileExtension = record.storage_path.split('.').pop()?.toLowerCase();
-            
-            // For PDFs and images, create an embedded viewer page
-            const directViewTypes = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'];
-            
-            if (fileExtension && directViewTypes.includes(fileExtension)) {
-                // Create a viewer page with the actual file embedded
-                showEmbeddedFileViewer(record, viewUrl, fileExtension);
-            } else {
-                // For other file types (DICOM, documents, etc.), show a viewer page
-                showFileViewerPage(record, viewUrl);
-            }
-            
-        } catch (error) {
-            console.error('Error viewing record:', error);
-            addToast('Failed to view record', 'error');
-        }
-    };
+  const handleUploadSuccess = (newRecord: MedicalRecord) => {
+    setRecords(prev => [newRecord, ...prev]);
+    setIsUploadVisible(false);
+    addToast('File uploaded successfully!', 'success');
+  };
 
-    // Function to show embedded file viewer for PDFs and images
-    const showEmbeddedFileViewer = (record: PatientRecord, fileUrl: string, fileExtension: string) => {
-        const fileName = record.storage_path?.split('/').pop();
-        const isDarkTheme = isDarkMode; // Get current theme state
-        
-        const htmlContent = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View ${record.title}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: ${isDarkTheme ? '#0f172a' : '#f8fafc'};
-            color: ${isDarkTheme ? '#e2e8f0' : '#334155'};
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .header {
-            background: ${isDarkTheme ? '#1e293b' : 'white'};
-            border-bottom: 1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'};
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .header h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: ${isDarkTheme ? '#f1f5f9' : '#1e293b'};
-        }
-        .header-info {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .info-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-            color: ${isDarkTheme ? '#94a3b8' : '#64748b'};
-        }
-        .badge {
-            background: ${isDarkTheme ? '#1e40af' : '#dbeafe'};
-            color: ${isDarkTheme ? '#bfdbfe' : '#1d4ed8'};
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.8rem;
-        }
-        .download-btn {
-            background: ${isDarkTheme ? '#3b82f6' : '#000000'};
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-        .download-btn:hover {
-            background: ${isDarkTheme ? '#2563eb' : '#374151'};
-            transform: translateY(-1px);
-        }
-        .viewer-container {
-            flex: 1;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 0;
-        }
-        .file-viewer {
-            width: 100%;
-            height: 100%;
-            border: none;
-            border-radius: 12px;
-            background: ${isDarkTheme ? '#1e293b' : 'white'};
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .image-viewer {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            background: ${isDarkTheme ? '#1e293b' : 'white'};
-        }
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 16px;
-            color: ${isDarkTheme ? '#94a3b8' : '#64748b'};
-        }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid ${isDarkTheme ? '#334155' : '#e2e8f0'};
-            border-top: 3px solid ${isDarkTheme ? '#3b82f6' : '#000000'};
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        @media (max-width: 768px) {
-            .header {
-                padding: 16px;
-            }
-            .header-info {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-            .viewer-container {
-                padding: 16px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>
-            <svg style="width: 24px; height: 24px; display: inline-block; margin-right: 8px; vertical-align: middle;" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-            </svg>
-            ${record.title}
-        </h1>
-        <div class="header-info">
-            <div class="info-item">
-                <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-3V2h-2v2H8V2H6v2H3c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h14c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1z"/>
-                </svg>
-                <span>${record.created_at ? new Date(record.created_at).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                }) : 'Unknown'}</span>
-            </div>
-            <div class="info-item">
-                <span class="badge">${record.record_type}</span>
-            </div>
-            <div class="info-item">
-                <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M10 4H4c-1.1 0-2 .9-2 2v3h2V6h6V4zm6 2v2h4V4h-6c1.1 0 2 .9 2 2zM4 10H2v6c0 1.1.9 2 2 2h6v-2H4V10zm16 0h-2v6h-6v2h6c1.1 0 2-.9 2-2V10z"/>
-                </svg>
-                <span>${fileName}</span>
-            </div>
-            <a href="${fileUrl}" download="${fileName}" class="download-btn">
-                <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                </svg>
-                Download
-            </a>
-        </div>
-    </div>
-    
-    <div class="viewer-container">
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <span>Loading ${fileExtension.toUpperCase()} file...</span>
-        </div>
-        
-        ${fileExtension === 'pdf' ? `
-            <iframe 
-                id="fileViewer"
-                src="${fileUrl}" 
-                class="file-viewer"
-                style="display: none;"
-                onload="hideLoading()"
-                onerror="showError()">
-            </iframe>
-        ` : `
-            <img 
-                id="fileViewer"
-                src="${fileUrl}" 
-                alt="${record.title}"
-                class="image-viewer"
-                style="display: none;"
-                onload="hideLoading()"
-                onerror="showError()"
-            />
-        `}
-    </div>
-    
-    <script>
-        function hideLoading() {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('fileViewer').style.display = 'block';
-        }
-        
-        function showError() {
-            document.getElementById('loading').innerHTML = \`
-                <div style="text-align: center;">
-                    <svg style="width: 48px; height: 48px; color: #ef4444; margin-bottom: 16px;" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                    </svg>
-                    <p>Unable to load the file.</p>
-                    <p style="font-size: 0.9rem; margin-top: 8px;">
-                        <a href="${fileUrl}" download="${fileName}" style="color: #3b82f6;">
-                            Click here to download the file instead
-                        </a>
-                    </p>
-                </div>
-            \`;
-        }
-        
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 's') {
-                e.preventDefault();
-                window.location.href = '${fileUrl}';
-            }
-            if (e.key === 'Escape') {
-                window.close();
-            }
-        });
-        
-        // Auto-focus for accessibility
-        document.body.focus();
-    </script>
-</body>
-</html>`;
+  const handleViewRecord = async (record: MedicalRecord) => {
+    try {
+      if (!record.fileUrl) {
+        addToast('File not found', 'error');
+        return;
+      }
 
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = window.URL.createObjectURL(blob);
-        const newWindow = window.open(url, '_blank');
-        
-        if (newWindow) {
-            setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-            addToast('File opened in new tab', 'success');
-        } else {
-            addToast('Please allow popups to view the file', 'error');
-        }
-    };
-
-    // Function to show a viewer page for other file types
-    const showFileViewerPage = (record: PatientRecord, fileUrl: string) => {
-        const fileName = record.storage_path?.split('/').pop();
-        const fileExtension = record.storage_path?.split('.').pop()?.toLowerCase();
-        const isDarkTheme = isDarkMode;
-
-        // Helper function to get file icon
-        const getFileIcon = (extension: string | undefined) => {
-            const iconStyle = "width: 64px; height: 64px; color: #6b7280;";
-            
-            switch (extension) {
-                case 'dcm':
-                case 'dicom':
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>`;
-                case 'doc':
-                case 'docx':
-                case 'txt':
-                case 'rtf':
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
-                case 'xls':
-                case 'xlsx':
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>`;
-                case 'ppt':
-                case 'pptx':
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
-                case 'zip':
-                case 'rar':
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-2 .9-2 2v3h2V6h6V4zm6 2v2h4V4h-6c1.1 0 2 .9 2 2zM4 10H2v6c0 1.1.9 2 2 2h6v-2H4V10zm16 0h-2v6h-6v2h6c1.1 0 2-.9 2-2V10z"/></svg>`;
-                case 'mp4':
-                case 'avi':
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
-                case 'wav':
-                case 'mp3':
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`;
-                default:
-                    return `<svg style="${iconStyle}" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
-            }
-        };
-        
-        const htmlContent = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View ${record.title}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: ${isDarkTheme ? '#0f172a' : '#f8fafc'};
-            color: ${isDarkTheme ? '#e2e8f0' : '#334155'};
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .header {
-            background: ${isDarkTheme ? '#1e293b' : 'white'};
-            border-bottom: 1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'};
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .header h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: ${isDarkTheme ? '#f1f5f9' : '#1e293b'};
-        }
-        .header-info {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .info-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-            color: ${isDarkTheme ? '#94a3b8' : '#64748b'};
-        }
-        .badge {
-            background: ${isDarkTheme ? '#1e40af' : '#dbeafe'};
-            color: ${isDarkTheme ? '#bfdbfe' : '#1d4ed8'};
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.8rem;
-        }
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-        .btn-primary {
-            background: ${isDarkTheme ? '#3b82f6' : '#000000'};
-            color: white;
-        }
-        .btn-primary:hover {
-            background: ${isDarkTheme ? '#2563eb' : '#374151'};
-            transform: translateY(-1px);
-        }
-        .btn-secondary {
-            background: ${isDarkTheme ? '#374151' : '#f1f5f9'};
-            color: ${isDarkTheme ? '#d1d5db' : '#475569'};
-            border: 1px solid ${isDarkTheme ? '#4b5563' : '#d1d5db'};
-        }
-        .btn-secondary:hover {
-            background: ${isDarkTheme ? '#4b5563' : '#e2e8f0'};
-        }
-        .viewer-container {
-            flex: 1;
-            padding: 40px 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        .viewer-content {
-            max-width: 600px;
-            padding: 40px;
-            background: ${isDarkTheme ? '#1e293b' : 'white'};
-            border-radius: 16px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-        .file-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-        }
-        .file-info h2 {
-            font-size: 1.5rem;
-            margin-bottom: 8px;
-            color: ${isDarkTheme ? '#f1f5f9' : '#1e293b'};
-        }
-        .file-info p {
-            margin-bottom: 16px;
-            color: ${isDarkTheme ? '#94a3b8' : '#64748b'};
-        }
-        .actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 24px;
-        }
-        .special-note {
-            background: ${isDarkTheme ? '#1e40af' : '#dbeafe'};
-            color: ${isDarkTheme ? '#bfdbfe' : '#1d4ed8'};
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-size: 0.9rem;
-        }
-        @media (max-width: 768px) {
-            .header {
-                padding: 16px;
-            }
-            .header-info {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-            .viewer-container {
-                padding: 20px 16px;
-            }
-            .viewer-content {
-                padding: 30px 20px;
-            }
-            .actions {
-                flex-direction: column;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>
-            <svg style="width: 24px; height: 24px; display: inline-block; margin-right: 8px; vertical-align: middle;" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-            </svg>
-            ${record.title}
-        </h1>
-        <div class="header-info">
-            <div class="info-item">
-                <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-3V2h-2v2H8V2H6v2H3c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h14c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1z"/>
-                </svg>
-                <span>${record.created_at ? new Date(record.created_at).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                }) : 'Unknown'}</span>
-            </div>
-            <div class="info-item">
-                <span class="badge">${record.record_type}</span>
-            </div>
-            <div class="info-item">
-                <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M10 4H4c-1.1 0-2 .9-2 2v3h2V6h6V4zm6 2v2h4V4h-6c1.1 0 2 .9 2 2zM4 10H2v6c0 1.1.9 2 2 2h6v-2H4V10zm16 0h-2v6h-6v2h6c1.1 0 2-.9 2-2V10z"/>
-                </svg>
-                <span>${fileName}</span>
-            </div>
-        </div>
-    </div>
-    
-    <div class="viewer-container">
-        <div class="viewer-content">
-            <div class="file-icon">
-                ${getFileIcon(fileExtension)}
-            </div>
-            
-            <div class="file-info">
-                <h2>${fileName}</h2>
-                <p>File Type: ${fileExtension ? fileExtension.toUpperCase() : 'Unknown'}</p>
-                <p>Record Type: ${record.record_type}</p>
-            </div>
-            
-            ${fileExtension === 'dcm' || fileExtension === 'dicom' ? `
-                <div class="special-note">
-                    <svg style="width: 20px; height: 20px; display: inline-block; margin-right: 8px; vertical-align: middle;" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                    </svg>
-                    This is a DICOM medical imaging file. For best viewing experience, 
-                    download and open with specialized medical imaging software.
-                </div>
-            ` : ''}
-            
-            <div class="actions">
-                <a href="${fileUrl}" download="${fileName}" class="btn btn-primary">
-                    <svg style="width: 16px; height: 16px; margin-right: 8px;" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                    </svg>
-                    Download File
-                </a>
-                <a href="${fileUrl}" target="_blank" class="btn btn-secondary">
-                    <svg style="width: 16px; height: 16px; margin-right: 8px;" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
-                    </svg>
-                    Open in Browser
-                </a>
-                <button onclick="window.close()" class="btn btn-secondary">
-                    <svg style="width: 16px; height: 16px; margin-right: 8px;" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                    </svg>
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 's') {
-                e.preventDefault();
-                window.location.href = '${fileUrl}';
-            }
-            if (e.key === 'Escape') {
-                window.close();
-            }
-        });
-    </script>
-</body>
-</html>`;
-
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = window.URL.createObjectURL(blob);
-        const newWindow = window.open(url, '_blank');
-        
-        if (newWindow) {
-            setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-            addToast('File viewer opened in new tab', 'success');
-        } else {
-            addToast('Please allow popups to view the file', 'error');
-        }
-    };
-
-    // Function to show record details when no file is available
-    const showRecordDetailsPage = (record: PatientRecord) => {
-        const isDarkTheme = isDarkMode;
-        
-        const htmlContent = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${record.title} - Details</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: ${isDarkTheme ? '#0f172a' : '#f8fafc'};
-            color: ${isDarkTheme ? '#e2e8f0' : '#334155'};
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: ${isDarkTheme ? '#1e293b' : 'white'};
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-        .header {
-            background: linear-gradient(135deg, ${isDarkTheme ? '#1e40af' : '#000000'}, ${isDarkTheme ? '#3b82f6' : '#374151'});
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        .header h1 {
-            font-size: 2rem;
-            margin-bottom: 8px;
-        }
-        .header p {
-            opacity: 0.9;
-        }
-        .content {
-            padding: 30px;
-        }
-        .detail-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .detail-item {
-            background: ${isDarkTheme ? '#0f172a' : '#f8fafc'};
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'};
-        }
-        .detail-label {
-            font-weight: 600;
-            color: ${isDarkTheme ? '#94a3b8' : '#64748b'};
-            font-size: 0.9rem;
-            margin-bottom: 8px;
-        }
-        .detail-value {
-            color: ${isDarkTheme ? '#f1f5f9' : '#1e293b'};
-            font-size: 1.1rem;
-        }
-        .badge {
-            background: ${isDarkTheme ? '#1e40af' : '#dbeafe'};
-            color: ${isDarkTheme ? '#bfdbfe' : '#1d4ed8'};
-            padding: 6px 16px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: inline-block;
-        }
-        .close-btn {
-            background: ${isDarkTheme ? '#3b82f6' : '#000000'};
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.2s;
-            display: block;
-            margin: 0 auto;
-        }
-        .close-btn:hover {
-            background: ${isDarkTheme ? '#2563eb' : '#374151'};
-            transform: translateY(-1px);
-        }
-        .no-file-notice {
-            text-align: center;
-            padding: 20px;
-            background: ${isDarkTheme ? '#1e40af' : '#dbeafe'};
-            color: ${isDarkTheme ? '#bfdbfe' : '#1d4ed8'};
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            .header {
-                padding: 20px;
-            }
-            .header h1 {
-                font-size: 1.5rem;
-            }
-            .content {
-                padding: 20px;
-            }
-            .detail-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>
-                <svg style="width: 32px; height: 32px; display: inline-block; margin-right: 12px; vertical-align: middle;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                </svg>
-                ${record.title}
-            </h1>
-            <p>Medical Record Details</p>
-        </div>
-        
-        <div class="content">
-            <div class="no-file-notice">
-                <svg style="width: 24px; height: 24px; display: inline-block; margin-right: 8px; vertical-align: middle;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                </svg>
-                This record contains information only - no file attachment available
-            </div>
-            
-            <div class="detail-grid">
-                <div class="detail-item">
-                    <div class="detail-label">Record Type</div>
-                    <div class="detail-value">
-                        <span class="badge">${record.record_type}</span>
-                    </div>
-                </div>
-                
-                <div class="detail-item">
-                    <div class="detail-label">Date Created</div>
-                    <div class="detail-value">
-                        ${record.created_at ? new Date(record.created_at).toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        }) : 'Unknown'}
-                    </div>
-                </div>
-                
-                <div class="detail-item">
-                    <div class="detail-label">Status</div>
-                    <div class="detail-value">
-                        <span class="badge">Active</span>
-                    </div>
-                </div>
-                
-                <div class="detail-item">
-                    <div class="detail-label">Record ID</div>
-                    <div class="detail-value">${record.id}</div>
-                </div>
-            </div>
-            
-            <button onclick="window.close()" class="close-btn">
-                <svg style="width: 20px; height: 20px; display: inline-block; margin-right: 8px; vertical-align: middle;" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-                Close Window
-            </button>
-        </div>
-    </div>
-    
-    <script>
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                window.close();
-            }
-        });
-    </script>
-</body>
-</html>`;
-
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = window.URL.createObjectURL(blob);
-        const newWindow = window.open(url, '_blank');
-        
-        if (newWindow) {
-            setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-            addToast('Record details opened in new tab', 'success');
-        } else {
-            addToast('Please allow popups to view the record details', 'error');
-        }
-    };
-
-    const handleDeleteRecord = async (record: PatientRecord) => {
-        try {
-            await api.deleteRecord(record.id);
-            setRecords(prev => prev.filter(r => r.id !== record.id));
-            addToast('Record deleted successfully', 'success');
-            setIsDeleteModalOpen(false);
-            setRecordToDelete(null);
-        } catch (error) {
-            console.error('Error deleting record:', error);
-            addToast('Failed to delete record', 'error');
-        }
-    };
-
-    if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <LoadingSpinner size="lg" />
-            </div>
-        );
+      const downloadUrl = await api.getRecordDownloadUrl(record.fileUrl);
+      window.open(downloadUrl, '_blank');
+      
+    } catch (error) {
+      console.error('Error viewing record:', error);
+      addToast('Failed to view record', 'error');
     }
+  };
 
+  const handleDownloadRecord = async (record: MedicalRecord) => {
+    try {
+      if (!record.fileUrl) {
+        addToast('File not found', 'error');
+        return;
+      }
+
+      const downloadUrl = await api.getRecordDownloadUrl(record.fileUrl);
+      
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = record.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      addToast('Download started', 'success');
+      
+    } catch (error) {
+      console.error('Error downloading record:', error);
+      addToast('Failed to download record', 'error');
+    }
+  };
+
+  const handleDeleteRecord = async (record: MedicalRecord) => {
+    setRecordToDelete(record);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteRecord = async () => {
+    if (!recordToDelete) return;
+
+    try {
+      await api.deleteRecord(recordToDelete.id);
+      
+      // Refresh records from database
+      const data = await api.getMyRecords();
+      const formattedRecords = data ? data.map(record => ({
+        id: record.id,
+        patientId: record.patient_id,
+        type: record.record_type,
+        name: record.title,
+        uploadDate: new Date(record.created_at).toLocaleDateString(),
+        fileUrl: record.storage_path,
+        uploadedBy: 'You'
+      })) : [];
+
+      setRecords(formattedRecords);
+      addToast('Record deleted successfully', 'success');
+    } catch (error) {
+      console.error('Error deleting record:', error);
+      addToast('Failed to delete record', 'error');
+    } finally {
+      setRecordToDelete(null);
+    }
+  };
+
+  const getRecordTypeIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'lab results':
+      case 'lab report':
+        return '🧪';
+      case 'imaging':
+        return '�';
+      case 'prescription':
+        return '💊';
+      case 'consultation':
+        return '👨‍⚕️';
+      case 'surgery':
+        return '🏥';
+      case 'dicom':
+        return '🏥';
+      case 'note':
+        return '📝';
+      default:
+        return '�';
+    }
+  };
+
+  if (isLoading) {
     return (
-        <div className={`min-h-screen transition-all duration-300 ${
-            isDarkMode 
-                ? 'bg-slate-900' 
-                : 'bg-gray-50'
-        }`}>
-            {/* Modern Hero Section */}
-            <div className={`relative ${
-                isDarkMode 
-                    ? 'bg-gradient-to-r from-slate-800 to-slate-900' 
-                    : 'bg-gradient-to-r from-white to-gray-100'
-            } transition-all duration-300`}>
-                <div className="max-w-7xl mx-auto px-6 py-16">
-                    <div className="grid lg:grid-cols-2 gap-12 items-center">
-                        {/* Left Content */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6 }}
-                            className="space-y-8"
-                        >
-                            <div className="space-y-4">
-                                <motion.h1 
-                                    className="text-6xl lg:text-7xl font-black leading-tight"
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ duration: 0.6, delay: 0.2 }}
-                                >
-                                    <span className="text-black">Your Health,</span>
-                                    <br />
-                                    <span className={`${
-                                        isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                                    }`}>Simplified</span>
-                                </motion.h1>
-                                <motion.p 
-                                    className={`text-xl font-medium max-w-lg ${
-                                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                                    }`}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ duration: 0.6, delay: 0.4 }}
-                                >
-                                    Take control of your medical data with our secure, intuitive platform designed for modern healthcare.
-                                </motion.p>
-                            </div>
-
-                            <motion.div 
-                                className="flex flex-col sm:flex-row gap-4"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, delay: 0.6 }}
-                            >
-                                <Button
-                                    onClick={() => setIsUploadVisible(true)}
-                                    className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 hover:scale-105 ${
-                                        isDarkMode 
-                                            ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/25' 
-                                            : 'bg-black hover:bg-gray-800 text-white shadow-lg shadow-gray-900/25'
-                                    }`}
-                                >
-                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
-                                    </svg>
-                                    Upload Record
-                                </Button>
-                                <Button
-                                    onClick={() => setIsGrantAccessModalOpen(true)}
-                                    variant="outline"
-                                    className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 hover:scale-105 ${
-                                        isDarkMode 
-                                            ? 'border-gray-600 text-gray-300 hover:bg-gray-800' 
-                                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                    }`}
-                                >
-                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-                                    </svg>
-                                    Grant Access
-                                </Button>
-                            </motion.div>
-                        </motion.div>
-
-                        {/* Right Content - Statistics */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.3 }}
-                            className="lg:justify-self-end"
-                        >
-                            <div className="grid grid-cols-2 gap-6">
-                                <motion.div 
-                                    className={`p-6 rounded-2xl ${
-                                        isDarkMode ? 'bg-slate-800/50' : 'bg-white/80'
-                                    } backdrop-blur-sm border ${
-                                        isDarkMode ? 'border-gray-700' : 'border-gray-200'
-                                    }`}
-                                    whileHover={{ scale: 1.05 }}
-                                >
-                                    <div className="text-3xl mb-2">
-                                        <svg className="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
-                                        </svg>
-                                    </div>
-                                    <div className={`text-2xl font-bold ${
-                                        isDarkMode ? 'text-white' : 'text-gray-900'
-                                    }`}>
-                                        {filteredRecords.length}
-                                    </div>
-                                    <div className={`text-sm ${
-                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                                    }`}>
-                                        Total Records
-                                    </div>
-                                </motion.div>
-
-                                <motion.div 
-                                    className={`p-6 rounded-2xl ${
-                                        isDarkMode ? 'bg-slate-800/50' : 'bg-white/80'
-                                    } backdrop-blur-sm border ${
-                                        isDarkMode ? 'border-gray-700' : 'border-gray-200'
-                                    }`}
-                                    whileHover={{ scale: 1.05 }}
-                                >
-                                    <div className="text-3xl mb-2">
-                                        <svg className="w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-                                        </svg>
-                                    </div>
-                                    <div className={`text-2xl font-bold ${
-                                        isDarkMode ? 'text-white' : 'text-gray-900'
-                                    }`}>
-                                        100%
-                                    </div>
-                                    <div className={`text-sm ${
-                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                                    }`}>
-                                        Secure Storage
-                                    </div>
-                                </motion.div>
-
-                                <motion.div 
-                                    className={`p-6 rounded-2xl ${
-                                        isDarkMode ? 'bg-slate-800/50' : 'bg-white/80'
-                                    } backdrop-blur-sm border ${
-                                        isDarkMode ? 'border-gray-700' : 'border-gray-200'
-                                    }`}
-                                    whileHover={{ scale: 1.05 }}
-                                >
-                                    <div className="text-3xl mb-2">
-                                        <svg className="w-8 h-8 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                                        </svg>
-                                    </div>
-                                    <div className={`text-2xl font-bold ${
-                                        isDarkMode ? 'text-white' : 'text-gray-900'
-                                    }`}>
-                                        24/7
-                                    </div>
-                                    <div className={`text-sm ${
-                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                                    }`}>
-                                        Availability
-                                    </div>
-                                </motion.div>
-
-                                <motion.div 
-                                    className={`p-6 rounded-2xl ${
-                                        isDarkMode ? 'bg-slate-800/50' : 'bg-white/80'
-                                    } backdrop-blur-sm border ${
-                                        isDarkMode ? 'border-gray-700' : 'border-gray-200'
-                                    }`}
-                                    whileHover={{ scale: 1.05 }}
-                                >
-                                    <div className="text-3xl mb-2">
-                                        <svg className="w-8 h-8 text-purple-500" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                                        </svg>
-                                    </div>
-                                    <div className={`text-2xl font-bold ${
-                                        isDarkMode ? 'text-white' : 'text-gray-900'
-                                    }`}>
-                                        Global
-                                    </div>
-                                    <div className={`text-sm ${
-                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                                    }`}>
-                                        Access
-                                    </div>
-                                </motion.div>
-                            </div>
-                        </motion.div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Navigation Tabs */}
-            <div className="max-w-7xl mx-auto px-6 -mt-8 relative z-10">
-                <motion.div 
-                    className={`flex rounded-2xl p-2 ${
-                        isDarkMode ? 'bg-slate-800' : 'bg-white'
-                    } shadow-xl border ${
-                        isDarkMode ? 'border-gray-700' : 'border-gray-200'
-                    }`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.8 }}
-                >
-                    <button
-                        onClick={() => setActiveTab('records')}
-                        className={`flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                            activeTab === 'records'
-                                ? isDarkMode 
-                                    ? 'bg-blue-600 text-white shadow-lg'
-                                    : 'bg-black text-white shadow-lg'
-                                : isDarkMode
-                                    ? 'text-gray-400 hover:text-white hover:bg-slate-700'
-                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                        }`}
-                    >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                        </svg>
-                        Medical Records
-                        <Badge variant="secondary" className="ml-2">
-                            {filteredRecords.length}
-                        </Badge>
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('access')}
-                        className={`flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                            activeTab === 'access'
-                                ? isDarkMode 
-                                    ? 'bg-blue-600 text-white shadow-lg'
-                                    : 'bg-black text-white shadow-lg'
-                                : isDarkMode
-                                    ? 'text-gray-400 hover:text-white hover:bg-slate-700'
-                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                        }`}
-                    >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-                        </svg>
-                        Access Control
-                    </button>
-                </motion.div>
-            </div>
-
-            {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-6 py-12">
-                <AnimatePresence mode="wait">
-                    {activeTab === 'records' ? (
-                        <motion.div
-                            key="records"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                            className="space-y-8"
-                        >
-                            {/* Search and Filters */}
-                            <Card className={`${
-                                isDarkMode ? 'bg-slate-800 border-gray-700' : 'bg-white border-gray-200'
-                            }`}>
-                                <CardHeader>
-                                    <CardTitle className={`flex items-center gap-2 ${
-                                        isDarkMode ? 'text-white' : 'text-gray-900'
-                                    }`}>
-                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                                        </svg>
-                                        Your Medical Records
-                                    </CardTitle>
-                                    <p className={`${
-                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                                    }`}>
-                                        Securely manage and view your medical documents
-                                    </p>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <SearchInput
-                                            placeholder="Search medical records..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                            className={`${
-                                                isDarkMode 
-                                                    ? 'bg-slate-700 border-gray-600 text-white placeholder-gray-400' 
-                                                    : 'bg-white border-gray-300'
-                                            }`}
-                                        />
-                                        <AnimatedSelect
-                                            value={filterType}
-                                            onValueChange={setFilterType}
-                                            placeholder="All Types"
-                                            options={[
-                                                { value: 'All', label: 'All Types' },
-                                                { value: 'Lab Report', label: 'Lab Report' },
-                                                { value: 'Imaging', label: 'Imaging' },
-                                                { value: 'Prescription', label: 'Prescription' },
-                                                { value: 'DICOM', label: 'DICOM' },
-                                                { value: 'Note', label: 'Note' },
-                                                { value: 'Other', label: 'Other' }
-                                            ]}
-                                            className={`${
-                                                isDarkMode 
-                                                    ? 'bg-slate-700 border-gray-600 text-white' 
-                                                    : 'bg-white border-gray-300'
-                                            }`}
-                                        />
-                                        <DatePicker
-                                            value={filterDate}
-                                            onChange={setFilterDate}
-                                            placeholder="Filter from date..."
-                                            className={`${
-                                                isDarkMode 
-                                                    ? 'bg-slate-700 border-gray-600 text-white' 
-                                                    : 'bg-white border-gray-300'
-                                            }`}
-                                        />
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Records Display */}
-                            {error ? (
-                                <Alert variant="destructive">
-                                    <span className="text-red-600">{error}</span>
-                                </Alert>
-                            ) : filteredRecords.length === 0 ? (
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className={`text-center py-16 rounded-2xl ${
-                                        isDarkMode ? 'bg-slate-800' : 'bg-white'
-                                    } border ${
-                                        isDarkMode ? 'border-gray-700' : 'border-gray-200'
-                                    }`}
-                                >
-                                    <div className="text-6xl mb-4 flex justify-center">
-                                        <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                                        </svg>
-                                    </div>
-                                    <h3 className={`text-xl font-semibold mb-2 ${
-                                        isDarkMode ? 'text-white' : 'text-gray-900'
-                                    }`}>
-                                        No medical records found
-                                    </h3>
-                                    <p className={`${
-                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                                    } mb-6`}>
-                                        Upload your first medical record to get started
-                                    </p>
-                                    <Button
-                                        onClick={() => setIsUploadVisible(true)}
-                                        className={`${
-                                            isDarkMode 
-                                                ? 'bg-blue-600 hover:bg-blue-500' 
-                                                : 'bg-black hover:bg-gray-800'
-                                        } text-white`}
-                                    >
-                                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
-                                        </svg>
-                                        Upload Your First Record
-                                    </Button>
-                                </motion.div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {filteredRecords.map((record, index) => (
-                                        <motion.div
-                                            key={record.id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.4, delay: index * 0.1 }}
-                                            whileHover={{ scale: 1.02 }}
-                                            className={`rounded-2xl p-6 border transition-all duration-300 ${
-                                                isDarkMode 
-                                                    ? 'bg-slate-800 border-gray-700 hover:border-blue-500' 
-                                                    : 'bg-white border-gray-200 hover:border-blue-400'
-                                            } shadow-lg hover:shadow-xl`}
-                                        >
-                                            <div className="flex items-start justify-between mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="text-2xl">
-                                                        {getRecordTypeIcon(record.record_type)}
-                                                    </div>
-                                                    <div>
-                                                        <h3 className={`font-semibold text-lg truncate ${
-                                                            isDarkMode ? 'text-white' : 'text-gray-900'
-                                                        }`}>
-                                                            {record.title}
-                                                        </h3>
-                                                        <Badge 
-                                                            variant="secondary" 
-                                                            className={`${
-                                                                isDarkMode 
-                                                                    ? 'bg-blue-900 text-blue-200' 
-                                                                    : 'bg-blue-100 text-blue-800'
-                                                            }`}
-                                                        >
-                                                            {record.record_type}
-                                                        </Badge>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-3 mb-6">
-                                                <div className="flex justify-between">
-                                                    <span className={`text-sm ${
-                                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                                                    }`}>
-                                                        Date
-                                                    </span>
-                                                    <span className={`text-sm font-medium ${
-                                                        isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                                                    }`}>
-                                                        {record.created_at ? new Date(record.created_at).toLocaleDateString() : 'Unknown'}
-                                                    </span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span className={`text-sm ${
-                                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                                                    }`}>
-                                                        Status
-                                                    </span>
-                                                    <span className="text-sm">
-                                                        <Badge 
-                                                            variant="secondary" 
-                                                            className={`${
-                                                                isDarkMode 
-                                                                    ? 'bg-green-900 text-green-200' 
-                                                                    : 'bg-green-100 text-green-800'
-                                                            }`}
-                                                        >
-                                                            Active
-                                                        </Badge>
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    onClick={() => handleDownload(record)}
-                                                    className={`flex-1 ${
-                                                        isDarkMode 
-                                                            ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                                                            : 'bg-black hover:bg-gray-800 text-white'
-                                                    }`}
-                                                    size="sm"
-                                                >
-                                                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                                                    </svg>
-                                                    Download
-                                                </Button>
-                                                <Button
-                                                    onClick={() => handleViewRecord(record)}
-                                                    variant="outline"
-                                                    className={`flex-1 ${
-                                                        isDarkMode 
-                                                            ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
-                                                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                    }`}
-                                                    size="sm"
-                                                >
-                                                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                                                    </svg>
-                                                    View
-                                                </Button>
-                                            </div>
-                                        </motion.div>
-                                    ))}
-                                </div>
-                            )}
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            key="access"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <AccessRequestsManager />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
-
-            {/* Modals */}
-            <AnimatePresence>
-                {isUploadVisible && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-                        onClick={() => setIsUploadVisible(false)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
-                            className={`w-full max-w-2xl ${
-                                isDarkMode ? 'bg-slate-800' : 'bg-white'
-                            } rounded-2xl shadow-2xl overflow-hidden`}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className={`p-6 border-b ${
-                                isDarkMode ? 'border-gray-700' : 'border-gray-200'
-                            }`}>
-                                <div className="flex items-center justify-between">
-                                    <h2 className={`text-2xl font-bold flex items-center gap-2 ${
-                                        isDarkMode ? 'text-white' : 'text-gray-900'
-                                    }`}>
-                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
-                                        </svg>
-                                        Upload Medical Record
-                                    </h2>
-                                    <Button
-                                        onClick={() => setIsUploadVisible(false)}
-                                        variant="ghost"
-                                        size="sm"
-                                        className={`${
-                                            isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
-                                        }`}
-                                    >
-                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                                        </svg>
-                                    </Button>
-                                </div>
-                            </div>
-                            <div className="p-6">
-                                <FileUpload onUploadSuccess={handleUploadSuccess} />
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-
-                {isGrantAccessModalOpen && (
-                    <GrantAccessModal
-                        isOpen={isGrantAccessModalOpen}
-                        onClose={() => setIsGrantAccessModalOpen(false)}
-                    />
-                )}
-
-                {isDeleteModalOpen && recordToDelete && (
-                    <ConfirmDeleteModal
-                        isOpen={isDeleteModalOpen}
-                        onClose={() => {
-                            setIsDeleteModalOpen(false);
-                            setRecordToDelete(null);
-                        }}
-                        onConfirm={() => handleDeleteRecord(recordToDelete)}
-                        recordTitle={recordToDelete.title}
-                    />
-                )}
-            </AnimatePresence>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
     );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white flex">
+      {/* Left Sidebar */}
+      <div className="w-64 bg-gray-800 flex flex-col">
+        {/* Logo */}
+        <div className="p-6 border-b border-gray-700">
+          <h2 className="text-xl font-bold text-white">HealthVolt</h2>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-1">
+          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">General</div>
+          
+          {[
+            { id: 'dashboard', label: 'Dashboard', active: true },
+            { id: 'medical-records', label: 'Medical Records', badge: records.length },
+            { id: 'access-control', label: 'Access Control' },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveNav(item.id)}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-all duration-200 ${
+                activeNav === item.id
+                  ? 'bg-teal-500 text-white shadow-lg'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <span className="font-medium">{item.label}</span>
+              </div>
+              {item.badge && (
+                <span className="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full">
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+      </div>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Header */}
+        <div className="bg-gray-800 border-b border-gray-700 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-white">
+                Hello, {user?.email?.split('@')[0] || 'John Worker'} 👋
+              </h1>
+              <p className="text-sm text-gray-400">Welcome to the HealthVolt Patient Dashboard</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <SearchInput
+                  placeholder="Search anything..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-64 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">
+                    {user?.email?.charAt(0).toUpperCase() || 'J'}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white">{user?.email?.split('@')[0] || 'John Worker'}</p>
+                  <p className="text-xs text-gray-400">Patient</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Dashboard Content */}
+        <div className="flex-1 p-6 overflow-auto">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6"
+            >
+              <Alert variant="destructive" className="bg-red-900/20 border-red-600 text-red-300">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {error}
+                </div>
+              </Alert>
+            </motion.div>
+          )}
+
+          <AnimatePresence mode="wait">
+            {activeNav === 'dashboard' ? (
+              <motion.div
+                key="dashboard"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                {/* Metric Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Total Records */}
+                  <div className="bg-gradient-to-r from-cyan-400 to-cyan-500 rounded-2xl p-6 text-white">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-cyan-100 text-sm font-medium">Total Records</p>
+                        <p className="text-3xl font-bold">{records.length}+</p>
+                        <p className="text-cyan-100 text-sm">+15% from last month</p>
+                      </div>
+                      <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Access Requests */}
+                  <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-2xl p-6 text-white">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-yellow-100 text-sm font-medium">Access Requests</p>
+                        <p className="text-3xl font-bold">5+</p>
+                        <p className="text-yellow-100 text-sm">-2% from last month</p>
+                      </div>
+                      <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Shared Files */}
+                  <div className="bg-gradient-to-r from-pink-400 to-pink-500 rounded-2xl p-6 text-white">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-pink-100 text-sm font-medium">Shared Files</p>
+                        <p className="text-3xl font-bold">12+</p>
+                        <p className="text-pink-100 text-sm">+8% from last month</p>
+                      </div>
+                      <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Storage Used */}
+                  <div className="bg-gradient-to-r from-purple-400 to-purple-500 rounded-2xl p-6 text-white">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-purple-100 text-sm font-medium">Storage Used</p>
+                        <p className="text-3xl font-bold">2.4GB</p>
+                        <p className="text-purple-100 text-sm">of 10GB available</p>
+                      </div>
+                      <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Charts Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Records Statistics */}
+                  <div className="lg:col-span-2">
+                    <Card className="bg-gray-800 border-gray-700">
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle className="text-white">Records Statistics</CardTitle>
+                        <select className="bg-gray-700 border-gray-600 text-white text-sm rounded px-2 py-1">
+                          <option>Last 7 Days</option>
+                          <option>Last 30 Days</option>
+                          <option>Last 6 Months</option>
+                        </select>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-64 flex items-end justify-center space-x-2">
+                          <div className="flex items-end space-x-1 h-full">
+                            {Array.from({ length: 12 }, (_, i) => (
+                              <div
+                                key={i}
+                                className="w-6 bg-gradient-to-t from-teal-500 to-teal-400 rounded-t opacity-80 hover:opacity-100 transition-opacity"
+                                style={{ 
+                                  height: `${Math.random() * 60 + 20}%`,
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="mt-4 flex items-center space-x-6 text-sm">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
+                            <span className="text-gray-300">Uploads</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                            <span className="text-gray-300">Downloads</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                            <span className="text-gray-300">Shares</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Storage Usage */}
+                  <div>
+                    <Card className="bg-gray-800 border-gray-700">
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle className="text-white">Storage Usage</CardTitle>
+                        <select className="bg-gray-700 border-gray-600 text-white text-sm rounded px-2 py-1">
+                          <option>All Time</option>
+                          <option>This Month</option>
+                        </select>
+                      </CardHeader>
+                      <CardContent className="flex flex-col items-center">
+                        <div className="relative w-32 h-32 mb-4">
+                          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="40"
+                              stroke="#374151"
+                              strokeWidth="8"
+                              fill="transparent"
+                            />
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="40"
+                              stroke="#14b8a6"
+                              strokeWidth="8"
+                              fill="transparent"
+                              strokeDasharray="251.2"
+                              strokeDashoffset="62.8"
+                              className="transition-all duration-500"
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-white">75%</div>
+                              <div className="text-xs text-gray-400">Used</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-white">2.4GB</p>
+                          <p className="text-sm text-gray-400">of 10GB</p>
+                        </div>
+                        <div className="w-full mt-4 space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Images</span>
+                            <span className="text-white">1.2GB</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Documents</span>
+                            <span className="text-white">0.8GB</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Other</span>
+                            <span className="text-white">0.4GB</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
+                {/* Recent Records Table */}
+                <Card className="bg-gray-800 border-gray-700">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-white">Recent Medical Records</CardTitle>
+                    <Button 
+                      onClick={() => setActiveNav('medical-records')}
+                      className="bg-teal-500 hover:bg-teal-600 text-white"
+                      size="sm"
+                    >
+                      See All
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {records.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="w-16 h-16 mx-auto bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                          <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                          </svg>
+                        </div>
+                        <h3 className="text-lg font-semibold text-white mb-2">No Records Yet</h3>
+                        <p className="text-gray-400 mb-4">Upload your first medical record to get started</p>
+                        <Button 
+                          onClick={() => {
+                            setActiveNav('medical-records');
+                            setIsUploadVisible(true);
+                          }}
+                          className="bg-teal-500 hover:bg-teal-600 text-white"
+                        >
+                          Upload Record
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-700">
+                              <th className="text-left text-gray-400 font-medium py-3">Name</th>
+                              <th className="text-left text-gray-400 font-medium py-3">Type</th>
+                              <th className="text-left text-gray-400 font-medium py-3">Date</th>
+                              <th className="text-left text-gray-400 font-medium py-3">Status</th>
+                              <th className="text-left text-gray-400 font-medium py-3">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {records.slice(0, 5).map((record) => (
+                              <tr key={record.id} className="border-b border-gray-700/50">
+                                <td className="py-4">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-8 h-8 bg-teal-500/20 rounded-lg flex items-center justify-center">
+                                      <span className="text-teal-400">{getRecordTypeIcon(record.type)}</span>
+                                    </div>
+                                    <span className="text-white font-medium">{record.name}</span>
+                                  </div>
+                                </td>
+                                <td className="py-4">
+                                  <Badge variant="secondary" className="bg-gray-700 text-gray-300">
+                                    {record.type}
+                                  </Badge>
+                                </td>
+                                <td className="py-4 text-gray-300">{record.uploadDate}</td>
+                                <td className="py-4">
+                                  <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">
+                                    Active
+                                  </span>
+                                </td>
+                                <td className="py-4">
+                                  <div className="flex items-center space-x-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleViewRecord(record)}
+                                      className="text-gray-400 hover:text-white"
+                                    >
+                                      👁️
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDownloadRecord(record)}
+                                      className="text-gray-400 hover:text-white"
+                                    >
+                                      ⬇️
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : activeNav === 'medical-records' ? (
+              <motion.div
+                key="medical-records"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                {/* Welcome Header */}
+                <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl p-6 text-white relative overflow-hidden">
+                  <div className="relative z-10">
+                    <h2 className="text-2xl font-bold mb-2">
+                      Welcome back, {user?.email?.split('@')[0] || 'Patient'}
+                    </h2>
+                    <p className="text-teal-100 mb-4">
+                      Manage your medical records securely and efficiently
+                    </p>
+                    {!isUploadVisible && (
+                      <Button 
+                        className="bg-white text-teal-600 hover:bg-gray-100"
+                        onClick={() => setIsUploadVisible(true)}
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Upload New Record
+                      </Button>
+                    )}
+                  </div>
+                  {/* Doctor Image */}
+                  <div className="absolute right-4 top-0 bottom-0 flex items-center">
+                    <img 
+                      src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&h=250&fit=crop&crop=face" 
+                      alt="Doctor" 
+                      className="w-32 h-40 object-cover rounded-lg"
+                    />
+                  </div>
+                </div>
+
+                {/* Upload Section */}
+                {isUploadVisible && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                  >
+                    <Card className="bg-gray-800 border-gray-700">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-white">Upload Medical Record</CardTitle>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => setIsUploadVisible(false)}
+                            className="text-gray-400 hover:text-white"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <FileUpload onSuccess={handleUploadSuccess} />
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+
+                {/* Statistics Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Card className="bg-gray-800 border-gray-700">
+                    <CardContent className="p-6">
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 bg-teal-500/20 rounded-lg flex items-center justify-center">
+                          <svg className="w-6 h-6 text-teal-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                          </svg>
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-2xl font-bold text-white">
+                            {records.length}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            Total Records
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gray-800 border-gray-700">
+                    <CardContent className="p-6">
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                          <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                          </svg>
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-2xl font-bold text-white">
+                            100%
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            Encrypted
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gray-800 border-gray-700">
+                    <CardContent className="p-6">
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                          <svg className="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                          </svg>
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-2xl font-bold text-white">
+                            HIPAA
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            Compliant
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Filters and Search */}
+                <Card className="bg-gray-800 border-gray-700">
+                  <CardHeader>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <CardTitle className="text-white">
+                        Your Medical Records
+                      </CardTitle>
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <SearchInput
+                          placeholder="Search records..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full sm:w-64 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
+                        />
+                        <select
+                          value={filterType}
+                          onChange={(e) => setFilterType(e.target.value)}
+                          className="px-3 py-2 border rounded-md bg-gray-700 border-gray-600 text-white"
+                        >
+                          <option value="All">All Types</option>
+                          <option value="Lab Report">Lab Report</option>
+                          <option value="Imaging">Imaging</option>
+                          <option value="Prescription">Prescription</option>
+                          <option value="DICOM">DICOM</option>
+                          <option value="Note">Note</option>
+                        </select>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {filteredRecords.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="w-24 h-24 mx-auto bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                          <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2 text-white">
+                          {searchTerm || filterType !== 'All' ? 'No Records Found' : 'No Medical Records Yet'}
+                        </h3>
+                        <p className="text-gray-400">
+                          {searchTerm || filterType !== 'All' 
+                            ? 'Try adjusting your search or filters' 
+                            : 'Upload your first medical record to get started'}
+                        </p>
+                        {!searchTerm && filterType === 'All' && (
+                          <Button 
+                            className="mt-4 bg-teal-500 hover:bg-teal-600 text-white"
+                            onClick={() => setIsUploadVisible(true)}
+                          >
+                            Upload Record
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <AnimatePresence>
+                          {filteredRecords.map((record, index) => (
+                            <motion.div
+                              key={record.id}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ delay: index * 0.1 }}
+                              whileHover={{ y: -4 }}
+                            >
+                              <Card className="h-full bg-gray-700 border-gray-600 hover:shadow-lg transition-all duration-300">
+                                <CardHeader className="pb-3">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-12 h-12 bg-teal-500/20 rounded-lg flex items-center justify-center text-2xl">
+                                        {getRecordTypeIcon(record.type)}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className="font-semibold text-sm text-white">
+                                          {record.name}
+                                        </h4>
+                                        <Badge variant="secondary" className="text-xs mt-1 bg-gray-600 text-gray-300">
+                                          {record.type}
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                                <CardContent className="pt-0">
+                                  <div className="space-y-3">
+                                    <div className="text-xs text-gray-400">
+                                      Uploaded: {record.uploadDate}
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1 text-xs bg-gray-600 border-gray-500 text-gray-300 hover:bg-gray-500 hover:text-white"
+                                        onClick={() => handleViewRecord(record)}
+                                      >
+                                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        View
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1 text-xs bg-gray-600 border-gray-500 text-gray-300 hover:bg-gray-500 hover:text-white"
+                                        onClick={() => handleDownloadRecord(record)}
+                                      >
+                                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Download
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 border-gray-500"
+                                        onClick={() => handleDeleteRecord(record)}
+                                      >
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : activeNav === 'access-control' ? (
+              <motion.div
+                key="access-control"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <AccessRequestsManager />
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setRecordToDelete(null);
+        }}
+        onConfirm={confirmDeleteRecord}
+        recordName={recordToDelete?.name || ''}
+      />
+    </div>
+  );
 };
 
 export default PatientDashboard;

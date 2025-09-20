@@ -9,7 +9,11 @@ const LandingPage: React.FC = () => {
   const { isDarkMode, toggleTheme } = useTheme();
 
   const handleGetStarted = () => {
-    navigate('/login');
+    navigate('/login', { state: { mode: 'signup' } });
+  };
+
+  const handleSignIn = () => {
+    navigate('/login', { state: { mode: 'login' } });
   };
 
   const handleContactUs = () => {
@@ -79,7 +83,7 @@ const LandingPage: React.FC = () => {
                 onClick={() => scrollToSection('contact')}
                 className={`font-medium transition-colors cursor-pointer ${
                   isDarkMode 
-                    ? 'text-slate-300 hover:text-white' 
+                    ? 'text-white hover:text-gray-300' 
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -108,7 +112,7 @@ const LandingPage: React.FC = () => {
               </button>
               
               <Button 
-                onClick={handleGetStarted}
+                onClick={handleSignIn}
                 variant="outline"
                 className={`transition-colors duration-300 ${
                   isDarkMode
@@ -166,7 +170,7 @@ const LandingPage: React.FC = () => {
                 size="lg"
                 className={`font-semibold px-8 py-4 text-lg transition-all duration-300 ${
                   isDarkMode
-                    ? 'border-2 border-slate-600 text-slate-300 hover:border-slate-500 hover:bg-slate-800'
+                    ? 'border-2 border-white text-white hover:border-gray-300 hover:bg-white hover:text-gray-900'
                     : 'border-2 border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50'
                 }`}
               >

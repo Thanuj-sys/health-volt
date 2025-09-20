@@ -68,7 +68,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
     return (
       <input
         className={`flex h-12 w-full rounded-lg border-2 border-slate-200 bg-white px-4 py-3 text-sm transition-all duration-200 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 hover:border-slate-300 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:focus-visible:ring-blue-500 ${className}`}
-        style={{ color: '#111827', ...style }}
+        style={style}
         ref={ref}
         {...props}
       />
