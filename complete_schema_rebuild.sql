@@ -128,12 +128,12 @@ CREATE TABLE public.access_permissions (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     patient_id uuid NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
     hospital_id uuid NOT NULL REFERENCES public.hospitals(id) ON DELETE CASCADE,
-    status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'revoked')),
+    granted boolean DEFAULT true,
     expires_at timestamptz,
     created_at timestamptz DEFAULT now(),
     updated_at timestamptz DEFAULT now(),
     
-    -- Unique constraint to prevent duplicate pending/active permissions
+    -- Unique constraint to prevent duplicate permissions
     UNIQUE(patient_id, hospital_id)
 );
 
@@ -270,7 +270,7 @@ CREATE POLICY "Hospitals can view patients with granted access" ON public.patien
             SELECT 1 FROM public.access_permissions ap
             WHERE ap.patient_id = id
             AND ap.hospital_id = public.get_current_hospital_id()
-            AND ap.status = 'approved'
+            AND ap.granted = true
             AND (ap.expires_at IS NULL OR ap.expires_at > now())
         )
     );
@@ -288,7 +288,7 @@ CREATE POLICY "Patients can view hospitals they granted access to" ON public.hos
             SELECT 1 FROM public.access_permissions ap
             WHERE ap.hospital_id = id
             AND ap.patient_id = public.get_current_patient_id()
-            AND ap.status = 'approved'
+            AND ap.granted = true
         )
     );
 
@@ -302,7 +302,7 @@ CREATE POLICY "Hospitals can view records of patients with granted access" ON pu
             SELECT 1 FROM public.access_permissions ap
             WHERE ap.patient_id = patient_id
             AND ap.hospital_id = public.get_current_hospital_id()
-            AND ap.status = 'approved'
+            AND ap.granted = true
             AND (ap.expires_at IS NULL OR ap.expires_at > now())
         )
     );
@@ -320,29 +320,16 @@ CREATE POLICY "Hospitals can insert records for patients with granted access" ON
             SELECT 1 FROM public.access_permissions ap
             WHERE ap.patient_id = patient_id
             AND ap.hospital_id = public.get_current_hospital_id()
-            AND ap.status = 'approved'
+            AND ap.granted = true
             AND (ap.expires_at IS NULL OR ap.expires_at > now())
         )
     );
 
 -- Access permissions policies
-CREATE POLICY "Hospitals can request access" ON public.access_permissions
-    FOR INSERT WITH CHECK (
-        hospital_id = public.get_current_hospital_id() AND
-        status = 'pending'
-    );
+CREATE POLICY "Patients can manage their own access permissions" ON public.access_permissions
+    FOR ALL USING (patient_id = public.get_current_patient_id());
 
-CREATE POLICY "Patients can manage their own access requests" ON public.access_permissions
-    FOR UPDATE USING (
-        patient_id = public.get_current_patient_id()
-    ) WITH CHECK (
-        status IN ('approved', 'rejected', 'revoked')
-    );
-
-CREATE POLICY "Patients can view their own permissions" ON public.access_permissions
-    FOR SELECT USING (patient_id = public.get_current_patient_id());
-
-CREATE POLICY "Hospitals can view permissions they requested" ON public.access_permissions
+CREATE POLICY "Hospitals can view permissions granted to them" ON public.access_permissions
     FOR SELECT USING (hospital_id = public.get_current_hospital_id());
 
 -- ==========================================
@@ -367,7 +354,7 @@ CREATE POLICY "Users can view files they have access to" ON storage.objects
                 SELECT 1 FROM public.access_permissions ap
                 WHERE ap.patient_id::text = (storage.foldername(name))[1]
                 AND ap.hospital_id = public.get_current_hospital_id()
-                AND ap.status = 'approved'
+                AND ap.granted = true
                 AND (ap.expires_at IS NULL OR ap.expires_at > now())
             )
         )

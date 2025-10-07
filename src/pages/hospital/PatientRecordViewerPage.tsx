@@ -2,21 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useToast } from '../../hooks/useToast';
+import { useTheme } from '../../contexts/ThemeContext';
 import * as api from '../../services/api';
 import { supabase } from '../../lib/supabase';
 import type { User, MedicalRecord } from '../../types';
 import { Button, Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui';
+import ConfirmDeleteModal from '../../components/ConfirmDeleteModal';
 
 const PatientRecordViewerPage: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { isDarkMode } = useTheme();
 
   const [patient, setPatient] = useState<User | null>(null);
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [note, setNote] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState<MedicalRecord | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchPatientData = async () => {
@@ -108,6 +114,29 @@ const PatientRecordViewerPage: React.FC = () => {
     }
   };
 
+  const handleDeleteRecord = async (record: MedicalRecord) => {
+    setRecordToDelete(record);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDeleteRecord = async () => {
+    if (!recordToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await api.deleteRecord(recordToDelete.id);
+      setRecords((prev) => prev.filter((r) => r.id !== recordToDelete.id));
+      addToast('Record deleted successfully', 'success');
+    } catch (error) {
+      console.error(error);
+      addToast('Failed to delete record', 'error');
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
+      setRecordToDelete(null);
+    }
+  };
+
   if (isLoading) {
     return <div className="text-center p-8 text-slate-900 dark:text-slate-100 font-medium">Loading patient records...</div>;
   }
@@ -126,48 +155,105 @@ const PatientRecordViewerPage: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-gray-900 dark:text-white" style={{ color: '#111827' }}>Medical Records for {patient.full_name ?? patient.name}</CardTitle>
+              <CardTitle className="text-gray-900 dark:text-white">Medical Records for {patient.full_name ?? patient.name}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="text-xs text-slate-900 uppercase bg-slate-100 dark:bg-slate-800 dark:text-slate-100 font-semibold">
+                  <thead className="text-xs text-white uppercase bg-slate-600 dark:bg-slate-800 dark:text-white font-semibold">
                     <tr>
-                      <th className="px-6 py-3 text-slate-900 dark:text-slate-100" style={{ color: '#111827' }}>Document</th>
-                      <th className="px-6 py-3 text-slate-900 dark:text-slate-100" style={{ color: '#111827' }}>Type</th>
-                      <th className="px-6 py-3 text-slate-900 dark:text-slate-100" style={{ color: '#111827' }}>Date</th>
-                      <th className="px-6 py-3 text-slate-900 dark:text-slate-100" style={{ color: '#111827' }}>Actions</th>
+                      <th className="px-6 py-3 text-white dark:text-white">Document</th>
+                      <th className="px-6 py-3 text-white dark:text-white">Type</th>
+                      <th className="px-6 py-3 text-white dark:text-white">Date</th>
+                      <th className="px-6 py-3 text-white dark:text-white">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {records.map((record) => (
                       <tr key={record.id} className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
-                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white" style={{ color: '#111827' }}>{record.name}</td>
-                        <td className="px-6 py-4 text-gray-800 dark:text-gray-100" style={{ color: '#1f2937' }}>{record.type}</td>
-                        <td className="px-6 py-4 text-gray-800 dark:text-gray-100" style={{ color: '#1f2937' }}>{record.uploadDate}</td>
+                        <td className="px-6 py-4 font-medium" style={{ color: isDarkMode ? '#ffffff' : '#111827' }}>{record.name}</td>
+                        <td className="px-6 py-4" style={{ color: isDarkMode ? '#ffffff' : '#1f2937' }}>{record.type}</td>
+                        <td className="px-6 py-4" style={{ color: isDarkMode ? '#ffffff' : '#1f2937' }}>{record.uploadDate}</td>
                         <td className="px-6 py-4 flex gap-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => window.open(record.fileUrl, '_blank')}
-                            className="border-blue-500 text-blue-700 hover:bg-blue-50 hover:border-blue-600 font-medium"
-                            style={{ borderColor: '#3b82f6', color: '#1d4ed8' }}
+                            className="border-blue-500 text-blue-700 hover:bg-blue-50 hover:border-blue-600 font-medium dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900"
                           >
+                            <svg className="w-4 h-4 mr-1 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
                             View
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              const link = document.createElement('a');
-                              link.href = record.fileUrl;
-                              link.download = record.name;
-                              link.click();
+                            onClick={async () => {
+                              try {
+                                console.log('Downloading file:', record.name, 'URL:', record.fileUrl);
+                                
+                                if (!record.fileUrl) {
+                                  addToast('File URL not available', 'error');
+                                  return;
+                                }
+
+                                // Method 1: Try direct download with fetch
+                                try {
+                                  const response = await fetch(record.fileUrl);
+                                  if (!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                  }
+                                  
+                                  const blob = await response.blob();
+                                  const url = window.URL.createObjectURL(blob);
+                                  const link = document.createElement('a');
+                                  link.href = url;
+                                  link.download = record.name;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                  window.URL.revokeObjectURL(url);
+                                  
+                                  addToast('File downloaded successfully', 'success');
+                                } catch (fetchError) {
+                                  console.log('Fetch method failed, trying direct link method:', fetchError);
+                                  
+                                  // Method 2: Fallback to direct link
+                                  const link = document.createElement('a');
+                                  link.href = record.fileUrl;
+                                  link.download = record.name;
+                                  link.target = '_blank';
+                                  link.rel = 'noopener noreferrer';
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                  
+                                  addToast('Download initiated', 'info');
+                                }
+                              } catch (error) {
+                                console.error('Download failed:', error);
+                                addToast('Failed to download file', 'error');
+                              }
                             }}
-                            className="border-green-500 text-green-700 hover:bg-green-50 hover:border-green-600 font-medium"
-                            style={{ borderColor: '#22c55e', color: '#15803d' }}
+                            className="border-green-500 text-green-700 hover:bg-green-50 hover:border-green-600 font-medium dark:border-green-400 dark:text-green-400 dark:hover:bg-green-900"
                           >
+                            <svg className="w-4 h-4 mr-1 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
                             Download
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteRecord(record)}
+                            className="border-red-500 text-red-700 hover:bg-red-50 hover:border-red-600 font-medium dark:border-red-400 dark:text-red-400 dark:hover:bg-red-900"
+                          >
+                            <svg className="w-4 h-4 mr-1 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete
                           </Button>
                         </td>
                       </tr>
@@ -182,19 +268,19 @@ const PatientRecordViewerPage: React.FC = () => {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-gray-900 dark:text-white" style={{ color: '#111827' }}>Patient Details</CardTitle>
+              <CardTitle className="text-gray-900 dark:text-white">Patient Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <p className="text-slate-900 dark:text-slate-100" style={{ color: '#111827' }}><strong className="text-slate-900 dark:text-slate-100" style={{ color: '#111827' }}>Name:</strong> {patient.full_name ?? patient.name}</p>
-              <p className="text-slate-900 dark:text-slate-100" style={{ color: '#111827' }}><strong className="text-slate-900 dark:text-slate-100" style={{ color: '#111827' }}>Email:</strong> {patient.email}</p>
-              <p className="text-slate-900 dark:text-slate-100" style={{ color: '#111827' }}><strong className="text-slate-900 dark:text-slate-100" style={{ color: '#111827' }}>Patient ID:</strong> {patient.id}</p>
+              <p className="text-slate-900 dark:text-white"><strong className="text-slate-900 dark:text-white">Name:</strong> {patient.full_name ?? patient.name}</p>
+              <p className="text-slate-900 dark:text-white"><strong className="text-slate-900 dark:text-white">Email:</strong> {patient.email}</p>
+              <p className="text-slate-900 dark:text-white"><strong className="text-slate-900 dark:text-white">Patient ID:</strong> {patient.id}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-gray-900 dark:text-white" style={{ color: '#111827' }}>Add a New Note</CardTitle>
-              <CardDescription className="text-gray-700 dark:text-gray-300" style={{ color: '#374151' }}>Notes are added to the patient's record.</CardDescription>
+              <CardTitle className="text-gray-900 dark:text-white">Add a New Note</CardTitle>
+              <CardDescription className="text-gray-700 dark:text-gray-300">Notes are added to the patient's record.</CardDescription>
             </CardHeader>
             <CardContent>
               <textarea
@@ -210,6 +296,16 @@ const PatientRecordViewerPage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setRecordToDelete(null);
+        }}
+        onConfirm={confirmDeleteRecord}
+        recordName={recordToDelete?.name || ''}
+      />
     </motion.div>
   );
 };

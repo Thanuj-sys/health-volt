@@ -3,12 +3,15 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { useAuth } from './hooks/useAuth';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import PatientDashboard from './pages/patient/PatientDashboard';
 import HospitalDashboard from './pages/hospital/HospitalDashboard';
 import PatientRecordViewerPage from './pages/hospital/PatientRecordViewerPage';
 import ConsentHistoryPage from './pages/patient/ConsentHistoryPage';
+import EmailAuthPage from './pages/EmailAuthPage';
 import MainLayout from './components/layout/MainLayout';
 
 // Enhanced loading spinner component
@@ -97,20 +100,22 @@ const AppRouter: React.FC = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes>
-        {/* If user is not authenticated, show login */}
+        {/* If user is not authenticated, show landing page and login */}
         {!user ? (
           <>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="/auth" element={<EmailAuthPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </>
         ) : (
           <>
-            <Route path="/login" element={<Navigate to="/" replace />} />
+            <Route path="/login" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             
             {/* Patient routes */}
             {user.role === 'patient' && (
               <Route path="/" element={<MainLayout />}>
-                <Route index element={<PatientDashboard />} />
                 <Route path="dashboard" element={<PatientDashboard />} />
                 <Route path="history" element={<ConsentHistoryPage />} />
               </Route>
@@ -119,14 +124,13 @@ const AppRouter: React.FC = () => {
             {/* Hospital routes */}
             {user.role === 'hospital' && (
               <Route path="/" element={<MainLayout />}>
-                <Route index element={<HospitalDashboard />} />
                 <Route path="dashboard" element={<HospitalDashboard />} />
                 <Route path="patient/:patientId" element={<PatientRecordViewerPage />} />
               </Route>
             )}
 
             {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </>
         )}
       </Routes>
@@ -138,15 +142,17 @@ const AppRouter: React.FC = () => {
 const App: React.FC = () => {
   console.log('App component rendering...');
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <Router>
-          <div className="min-h-screen">
-            <AppRouter />
-          </div>
-        </Router>
-      </ToastProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <Router>
+            <div className="min-h-screen">
+              <AppRouter />
+            </div>
+          </Router>
+        </ToastProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

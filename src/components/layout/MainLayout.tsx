@@ -5,17 +5,23 @@ import { motion } from 'framer-motion';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { Outlet } from 'react-router-dom';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const MainLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isDarkMode } = useTheme();
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className={`flex h-screen overflow-hidden transition-colors duration-300 ${
+      isDarkMode ? 'bg-slate-900' : 'bg-slate-50'
+    }`}>
       {/* Background with gradient */}
       <div 
         className="fixed inset-0 -z-10"
         style={{
-          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 25%, #f1f5f9 50%, #e0e7ff 75%, #f8fafc 100%)'
+          background: isDarkMode 
+            ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e3a8a 75%, #0f172a 100%)'
+            : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 25%, #f1f5f9 50%, #e0e7ff 75%, #f8fafc 100%)'
         }}
       />
       

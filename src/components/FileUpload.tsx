@@ -3,11 +3,11 @@ import { useDropzone, DropzoneOptions } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import * as api from '../services/api';
-import type { PatientRecord } from '../types';
+import type { MedicalRecord } from '../types';
 import { Button, Select, Card, CardContent, CardHeader, CardTitle, LoadingSpinner, Badge } from './ui';
 
 interface FileUploadProps {
-  onSuccess: (newRecord: PatientRecord) => void;
+  onSuccess: (newRecord: MedicalRecord) => void;
   patientIdForHospital?: string; // Optional for hospital use
 }
 
@@ -16,7 +16,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onSuccess, patientIdForHospital
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [recordType, setRecordType] = useState<PatientRecord['record_type']>('Lab Report');
+  const [recordType, setRecordType] = useState<MedicalRecord['type']>('Lab Report');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(acceptedFiles);
@@ -57,25 +57,21 @@ const FileUpload: React.FC<FileUploadProps> = ({ onSuccess, patientIdForHospital
     try {
       const patientId = patientIdForHospital || user!.id;
 
-      const newRecordData = await api.uploadRecord(
-        files[0],
-        patientId,
-        recordType,
-        files[0].name,
-        ''
-      );
+      const newRecordData = await api.uploadRecord(patientId, {
+        file: files[0],
+        recordType: recordType,
+        title: files[0].name,
+        notes: ''
+      });
 
-      const formattedRecord: PatientRecord = {
+      const formattedRecord: MedicalRecord = {
         id: newRecordData.id,
-        patient_id: newRecordData.patient_id,
-        record_type: newRecordData.record_type,
-        title: newRecordData.title,
-        notes: newRecordData.notes,
-        storage_path: newRecordData.storage_path,
-        created_at: newRecordData.created_at,
-        updated_at: newRecordData.updated_at,
-        uploaded_by_hospital_id: newRecordData.uploaded_by_hospital_id,
-        uploaded_by_patient_id: newRecordData.uploaded_by_patient_id,
+        name: newRecordData.title,
+        type: newRecordData.record_type,
+        uploadDate: new Date(newRecordData.created_at).toLocaleDateString(),
+        patientId: newRecordData.patient_id,
+        uploadedBy: (newRecordData as any).uploaded_by || 'You',
+        fileUrl: '', // Optional: call getRecordDownloadUrl(newRecordData.storage_path)
       };
 
       setUploadProgress(100);
@@ -149,10 +145,10 @@ const FileUpload: React.FC<FileUploadProps> = ({ onSuccess, patientIdForHospital
               className="flex flex-col items-center"
               animate={isDragActive ? { scale: 1.05 } : { scale: 1 }}
             >
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-colors ${
-                isDragActive ? 'bg-blue-100' : 'bg-slate-100'
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 transition-colors border-2 ${
+                isDragActive ? 'bg-blue-100 border-blue-300' : 'bg-slate-100 border-slate-200'
               }`}>
-                <svg className={`w-8 h-8 transition-colors ${
+                <svg className={`w-6 h-6 transition-colors ${
                   isDragActive ? 'text-blue-600' : 'text-slate-500'
                 }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -215,7 +211,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onSuccess, patientIdForHospital
                     </label>
                     <Select
                       value={recordType}
-                      onChange={(e) => setRecordType(e.target.value as PatientRecord['record_type'])}
+                      onChange={(e) => setRecordType(e.target.value as MedicalRecord['type'])}
                       className="w-full"
                     >
                       <option value="Lab Report">Lab Report</option>
