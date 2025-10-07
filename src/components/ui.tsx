@@ -105,7 +105,7 @@ export const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<
 
 export const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
     ({ className, ...props }, ref) => (
-      <h3 ref={ref} className={`text-2xl font-bold leading-none tracking-tight text-slate-900 dark:text-slate-100 ${className}`} {...props} />
+      <h3 ref={ref} className={`text-2xl font-bold leading-none tracking-tight ${className}`} {...props} />
     )
 );
 

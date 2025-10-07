@@ -21,7 +21,22 @@
   
   --slate-50: #f8fafc;
   --slate-100: #f1f5f9;
-  --slate-200: #e2e8f0;
+  --slate-200:html.dark .text-white {
+  color: #ffffff !important;
+}
+
+html.dark .text-gray-300 {
+  color: #ffffff !important;
+}
+
+html.dark .text-gray-400 {
+  color: #d1d5db !important;
+}
+
+html.dark .text-gray-500 {
+  color: #9ca3af !important;
+}
+
   --slate-300: #cbd5e1;
   --slate-400: #94a3b8;
   --slate-500: #64748b;
@@ -42,12 +57,23 @@
 body {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   background: linear-gradient(135deg, var(--slate-50) 0%, var(--primary-50) 100%);
-  color: var(--slate-800) !important;
+  color: var(--slate-800);
   line-height: 1.6;
   font-feature-settings: 'rlig' 1, 'calt' 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+}
+
+/* Dark mode body styles */
+body.dark {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #f8fafc;
+}
+
+html.dark body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #f8fafc;
 }
 
 /* Ensure text visibility */
@@ -101,13 +127,24 @@ button:disabled {
 input, select, textarea {
   font-family: inherit;
   font-size: 1rem;
-  border: 2px solid var(--slate-200);
+  border: 0px solid var(--slate-200);
   border-radius: 0.75rem;
   padding: 0.75rem 1rem;
   background-color: #ffffff;
   color: var(--slate-800);
   transition: all 0.15s ease-in-out;
   line-height: 1.5;
+}
+
+/* Dark mode input styles */
+html.dark input, html.dark select, html.dark textarea {
+  background-color: #374151;
+  color: #f9fafb;
+  border-color: #4b5563;
+}
+
+html.dark input::placeholder, html.dark textarea::placeholder {
+  color: #9ca3af;
 }
 
 input:focus, select:focus, textarea:focus {
@@ -129,17 +166,41 @@ select {
   background-size: 16px;
   padding-right: 2.5rem;
   font-weight: 500;
-  color: #1f2937 !important;
-  background-color: #ffffff !important;
+  color: #1f2937;
+  background-color: #ffffff;
+}
+
+/* Dark mode select styling */
+html.dark select {
+  background-color: #374151;
+  color: #f9fafb;
+  border-color: #4b5563;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+
+html.dark select option {
+  background-color: #374151;
+  color: #f9fafb;
 }
 
 select:hover {
   border-color: var(--slate-400);
-  background-color: #f8fafc !important;
+  background-color: #f8fafc;
 }
 
 select:focus {
-  background-color: #ffffff !important;
+  background-color: #ffffff;
+}
+
+/* Dark mode select hover/focus */
+html.dark select:hover {
+  background-color: #4b5563;
+  border-color: #6b7280;
+}
+
+html.dark select:focus {
+  background-color: #374151;
+  border-color: #3b82f6;
 }
 
 select option {
@@ -174,7 +235,6 @@ table {
   background: white;
   border-radius: 0.75rem;
   overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 th, td {
@@ -240,7 +300,6 @@ html {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Gradient text utility - Enhanced for better fallback */
@@ -515,6 +574,1952 @@ button:not(.custom-button):hover {
   }
 }
 
+/* Explicit dark mode overrides */
+html.dark {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+html.dark * {
+  border-color: #374151;
+}
+
+html.dark .bg-white {
+  background-color: #1f2937 !important;
+}
+
+html.dark .text-black {
+  color: #f8fafc !important;
+}
+
+html.dark .text-gray-900 {
+  color: #f8fafc !important;
+}
+
+html.dark .text-gray-800 {
+  color: #e5e7eb !important;
+}
+
+html.dark .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+html.dark .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+html.dark .border-gray-200 {
+  border-color: #374151 !important;
+}
+
+html.dark .border-gray-300 {
+  border-color: #4b5563 !important;
+}
+
+/* Make sure all text in dark mode is properly visible */
+html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 {
+  color: #ffffff !important;
+}
+
+html.dark p, html.dark span, html.dark div:not(.bg-white):not(.bg-gray-100) {
+  color: #f3f4f6 !important;
+}
+
+/* Ensure card titles and important text are bright white */
+html.dark .font-bold {
+  color: #ffffff !important;
+}
+
+html.dark .font-semibold {
+  color: #ffffff !important;
+}
+
+/* Specific overrides for statistics cards */
+html.dark .text-2xl {
+  color: #ffffff !important;
+}
+
+html.dark .text-lg {
+  color: #ffffff !important;
+}
+
+html.dark .text-xl {
+  color: #ffffff !important;
+}
+
+/* Hospital dashboard specific fixes */
+html.dark .bg-white h1,
+html.dark .bg-white h2,
+html.dark .bg-white h3,
+html.dark .bg-white h4,
+html.dark .bg-white h5,
+html.dark .bg-white h6 {
+  color: #1f2937 !important;
+}
+
+html.dark .bg-white p,
+html.dark .bg-white span,
+html.dark .bg-white div {
+  color: #374151 !important;
+}
+
+html.dark .bg-white .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+html.dark .bg-white .text-gray-600 {
+  color: #4b5563 !important;
+}
+
+html.dark .bg-white .text-gray-700 {
+  color: #374151 !important;
+}
+
+html.dark .bg-white .text-gray-800 {
+  color: #1f2937 !important;
+}
+
+html.dark .bg-white .text-gray-900 {
+  color: #111827 !important;
+}
+
+/* Ensure patient cards have proper text contrast */
+html.dark .bg-white .font-semibold {
+  color: #111827 !important;
+}
+
+html.dark .bg-white .font-bold {
+  color: #111827 !important;
+}
+
+/* Hospital dashboard specific text visibility fixes */
+html.dark .text-slate-600 {
+  color: #e2e8f0 !important;
+}
+
+html.dark .text-slate-700 {
+  color: #f1f5f9 !important;
+}
+
+html.dark .text-slate-800 {
+  color: #ffffff !important;
+}
+
+html.dark .text-slate-900 {
+  color: #ffffff !important;
+}
+
+/* Card backgrounds and content in dark mode */
+html.dark .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, #1f2937, #111827) !important;
+}
+
+html.dark .bg-white\/80 {
+  background: rgba(31, 41, 55, 0.9) !important;
+}
+
+html.dark .bg-white\/70 {
+  background: rgba(31, 41, 55, 0.8) !important;
+}
+
+html.dark .from-white {
+  background: linear-gradient(to bottom right, #374151, #1f2937) !important;
+}
+
+html.dark .to-slate-50 {
+  background: linear-gradient(to bottom right, #374151, #1f2937) !important;
+}
+
+/* Loading and empty state text */
+html.dark .text-center p {
+  color: #e2e8f0 !important;
+}
+
+/* Hospital dashboard patient cards - force white text in dark mode */
+html.dark .bg-gray-700 h4,
+html.dark .bg-gray-700 p,
+html.dark .bg-gray-700 span,
+html.dark .bg-gray-700 div {
+  color: #ffffff !important;
+}
+
+html.dark .bg-gray-600 h4,
+html.dark .bg-gray-600 p,
+html.dark .bg-gray-600 span,
+html.dark .bg-gray-600 div {
+  color: #ffffff !important;
+}
+
+/* Specific targeting for patient card content */
+html.dark [class*="font-bold"] {
+  color: #ffffff !important;
+}
+
+html.dark [class*="font-medium"] {
+  color: #ffffff !important;
+}
+
+html.dark [class*="font-semibold"] {
+  color: #ffffff !important;
+}
+
+/* Override any specific text colors in dark mode */
+html.dark .text-gray-300 {
+  color: #ffffff !important;
+}
+
+html.dark .text-white {
+  color: #ffffff !important;
+}
+
+/* Force white text for all card content in dark mode */
+html.dark .group h4,
+html.dark .group p,
+html.dark .group span:not(.bg-green-100):not(.bg-blue-100):not(.bg-yellow-100):not(.bg-red-100) {
+  color: #ffffff !important;
+}
+
+/* Patient card specific text */
+html.dark .space-y-3 span {
+  color: #ffffff !important;
+}
+
+html.dark .flex.justify-between span {
+  color: #ffffff !important;
+}
+
+html.dark .text-sm {
+  color: #ffffff !important;
+}
+
+/* Patient name and icon specific contrast improvements */
+html.dark .w-12.h-12 {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2) !important;
+}
+
+html.dark .font-bold.text-slate-900,
+html.dark .font-bold {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .text-sm.font-medium,
+html.dark .text-sm.text-slate-700 {
+  color: #e5e7eb !important;
+}
+
+/* Card header elements */
+html.dark .flex.items-center.space-x-3 h4 {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+html.dark .flex.items-center.space-x-3 p {
+  color: #d1d5db !important;
+}
+
+/* Ensure all patient card text is bright white */
+html.dark .bg-gray-700 * {
+  color: #ffffff !important;
+}
+
+html.dark .bg-gray-600 * {
+  color: #ffffff !important;
+}
+
+/* High contrast patient avatar and text */
+html.dark .bg-gradient-to-br.from-green-500.to-emerald-600 {
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Maximum contrast for all card text */
+html.dark .group.hover\\:shadow-2xl h4,
+html.dark .group.hover\\:shadow-2xl p,
+html.dark .group.hover\\:shadow-2xl span {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+/* Search input and other elements */
+html.dark input {
+  color: #ffffff !important;
+  background-color: #374151 !important;
+}
+
+html.dark input::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Force white text on everything in patient cards */
+html.dark .CardContent *,
+html.dark .CardHeader * {
+  color: #ffffff !important;
+}
+
+/* Add border lines for patient cards */
+html.dark .group.hover\\:shadow-2xl {
+  border: 2px solid #4b5563 !important;
+  border-radius: 12px !important;
+}
+
+html.light .group.hover\\:shadow-2xl,
+.group.hover\\:shadow-2xl {
+  border: 2px solid #e5e7eb !important;
+  border-radius: 12px !important;
+}
+
+/* Enhanced borders on hover */
+html.dark .group.hover\\:shadow-2xl:hover {
+  border-color: #6b7280 !important;
+}
+
+.group.hover\\:shadow-2xl:hover {
+  border-color: #d1d5db !important;
+}
+
+/* Individual card styling for better separation */
+html.dark .bg-gray-700 {
+  border: 1px solid #4b5563 !important;
+}
+
+html.dark .bg-gray-600 {
+  border: 1px solid #4b5563 !important;
+}
+
+/* Card container borders for better ID separation */
+html.dark .grid.grid-cols-1 > div {
+  border: 2px solid #374151 !important;
+  border-radius: 16px !important;
+  padding: 4px !important;
+}
+
+.grid.grid-cols-1 > div {
+  border: 2px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  padding: 4px !important;
+}
+
+/* Inner card styling */
+html.dark .bg-gray-700,
+html.dark .bg-gray-600 {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Light mode card borders */
+.bg-gradient-to-br.from-white.to-slate-50 {
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Patient count badge visibility in dark mode */
+html.dark .Badge,
+html.dark [class*="badge"] {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+  border: 1px solid #4b5563 !important;
+}
+
+/* Secondary badge styling */
+html.dark .badge-secondary,
+html.dark [variant="secondary"] {
+  background-color: #4b5563 !important;
+  color: #ffffff !important;
+  border: 1px solid #6b7280 !important;
+}
+
+/* Specific targeting for patient count */
+html.dark .text-sm:contains("Patient") {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  border: 1px solid #4b5563 !important;
+}
+
+/* Badge component variants in dark mode */
+html.dark .bg-slate-100 {
+  background-color: #374151 !important;
+}
+
+html.dark .text-slate-800 {
+  color: #ffffff !important;
+}
+
+html.dark .border-slate-200 {
+  border-color: #4b5563 !important;
+}
+
+html.dark .bg-blue-100 {
+  background-color: #1e40af !important;
+}
+
+html.dark .text-blue-800 {
+  color: #ffffff !important;
+}
+
+html.dark .border-blue-200 {
+  border-color: #3b82f6 !important;
+}
+
+/* General badge styling for dark mode */
+html.dark .inline-flex.items-center.px-2\.5.py-0\.5 {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+  border-color: #4b5563 !important;
+}
+
+/* Patient Dashboard specific text visibility fixes */
+html.dark .text-gray-600 {
+  color: #ffffff !important;
+}
+
+html.dark .text-gray-500 {
+  color: #e5e7eb !important;
+}
+
+html.dark .text-gray-400 {
+  color: #d1d5db !important;
+}
+
+/* Statistics cards text */
+html.dark .font-semibold {
+  color: #ffffff !important;
+}
+
+html.dark .text-3xl {
+  color: #ffffff !important;
+}
+
+html.dark .text-4xl {
+  color: #ffffff !important;
+}
+
+html.dark .text-5xl {
+  color: #ffffff !important;
+}
+
+/* Card titles and descriptions */
+html.dark .font-medium {
+  color: #ffffff !important;
+}
+
+/* Medical records section */
+html.dark .text-lg {
+  color: #ffffff !important;
+}
+
+html.dark .leading-6 {
+  color: #ffffff !important;
+}
+
+/* File upload and record cards */
+html.dark .bg-gray-800 {
+  color: #ffffff !important;
+}
+
+html.dark .bg-gray-700 * {
+  color: #ffffff !important;
+}
+
+/* Search and filter elements */
+html.dark .placeholder-gray-400::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Button text visibility */
+html.dark .bg-blue-600,
+html.dark .bg-indigo-600 {
+  color: #ffffff !important;
+}
+
+/* Patient dashboard welcome section */
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+  color: #ffffff !important;
+}
+
+html.dark p {
+  color: #e5e7eb !important;
+}
+
+/* Statistics card content */
+html.dark .flex.flex-col.items-center * {
+  color: #ffffff !important;
+}
+
+html.dark .text-center * {
+  color: #ffffff !important;
+}
+
+/* Medical records grid */
+html.dark .grid * {
+  color: #ffffff !important;
+}
+
+/* Sidebar text */
+html.dark .sidebar * {
+  color: #ffffff !important;
+}
+
+/* File names and metadata */
+html.dark .file-name,
+html.dark .upload-date,
+html.dark .file-type {
+  color: #ffffff !important;
+}
+
+/* Override any remaining dark text */
+html.dark .text-black {
+  color: #ffffff !important;
+}
+
+html.dark .text-gray-900 {
+  color: #ffffff !important;
+}
+
+html.dark .text-gray-800 {
+  color: #ffffff !important;
+}
+
+html.dark .text-gray-700 {
+  color: #ffffff !important;
+}
+
+/* Aggressive text color override for patient dashboard */
+html.dark *:not(input):not(textarea):not(select) {
+  color: #ffffff !important;
+}
+
+html.dark span:not(.bg-green-500):not(.bg-blue-500):not(.bg-red-500):not(.bg-yellow-500) {
+  color: #ffffff !important;
+}
+
+html.dark div:not(.bg-green-500):not(.bg-blue-500):not(.bg-red-500):not(.bg-yellow-500) {
+  color: #ffffff !important;
+}
+
+/* Statistics card specific targeting */
+html.dark .font-bold.text-2xl,
+html.dark .font-bold.text-3xl,
+html.dark .font-bold.text-4xl {
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+/* Card content forcing */
+html.dark .card * {
+  color: #ffffff !important;
+}
+
+html.dark .Card * {
+  color: #ffffff !important;
+}
+
+/* Flex container content */
+html.dark .flex * {
+  color: #ffffff !important;
+}
+
+/* Grid content */
+html.dark .grid-cols-1 *,
+html.dark .grid-cols-2 *,
+html.dark .grid-cols-3 * {
+  color: #ffffff !important;
+}
+
+/* Universal text override */
+html.dark [class*="text-"] {
+  color: #ffffff !important;
+}
+
+html.dark [class*="font-"] {
+  color: #ffffff !important;
+}
+
+/* Nuclear option - force all text to white in dark mode */
+html.dark * {
+  color: #ffffff !important;
+}
+
+/* Patient Avatar Icons - Enhanced Visibility in Dark Mode */
+html.dark .w-12.h-12.rounded-full {
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .bg-gradient-to-br.from-blue-400.to-indigo-500 {
+  background: linear-gradient(to bottom right, #60a5fa, #8b5cf6) !important;
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(96, 165, 250, 0.4) !important;
+}
+
+html.dark .bg-gradient-to-br.from-green-500.to-emerald-600 {
+  background: linear-gradient(to bottom right, #10b981, #059669) !important;
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+}
+
+/* SVG Icons in Dark Mode - Enhanced Visibility */
+html.dark svg {
+  color: #ffffff !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+}
+
+/* Search Icons and Button Icons */
+html.dark .w-5.h-5 {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+}
+
+html.dark .w-4.h-4 {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+}
+
+/* Specific Icons in Cards and Headers */
+html.dark .bg-gradient-to-br.from-blue-500.to-indigo-600 svg {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4)) !important;
+}
+
+/* Patient Count Badge Icons */
+html.dark .w-8.h-8.bg-gradient-to-br {
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .w-8.h-8.bg-gradient-to-br svg {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5)) !important;
+}
+
+/* User Icon in Top Right */
+html.dark .w-6.h-6 {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+}
+
+/* Theme Toggle Icons */
+html.dark .w-5.h-5.text-yellow-500 {
+  color: #fbbf24 !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+}
+
+/* Button Icons with Better Contrast */
+html.dark button svg {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4)) !important;
+}
+
+/* Medical Record Icons */
+html.dark .text-blue-600 {
+  color: #60a5fa !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+}
+
+/* Hospital Dashboard Empty State Icon */
+html.dark .w-24.h-24.bg-blue-100 {
+  background-color: #374151 !important;
+  border: 2px solid #4b5563 !important;
+}
+
+html.dark .w-24.h-24.bg-blue-100 svg {
+  color: #60a5fa !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) !important;
+}
+
+html.dark .w-12.h-12.text-blue-600 {
+  color: #60a5fa !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) !important;
+}
+
+/* Request Access Button Icon */
+html.dark .bg-gradient-to-r.from-blue-600.to-indigo-600 svg {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5)) !important;
+}
+
+/* View Medical Records Button Icon */
+html.dark .bg-gradient-to-r.from-blue-600.to-indigo-600.hover\\:from-blue-700 svg {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5)) !important;
+}
+
+/* Menu and Navigation Icons - Dark Mode Enhancement */
+html.dark .h-6.w-6,
+html.dark .h-5.w-5,
+html.dark .h-4.w-4 {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+}
+
+/* Specific Icon Colors for Dark Mode */
+html.dark svg[stroke="currentColor"] {
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+}
+
+html.dark svg[fill="currentColor"] {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+/* Hamburger Menu Icon */
+html.dark .lg\\:hidden svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Card Header Icons */
+html.dark .CardHeader svg,
+html.dark .card-header svg {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+}
+
+/* Patient Dashboard Icons */
+html.dark .text-slate-600 svg {
+  color: #ffffff !important;
+}
+
+html.dark .text-blue-600 svg {
+  color: #60a5fa !important;
+}
+
+/* Header Navigation Icons */
+html.dark .p-2.rounded-lg svg {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+}
+
+/* Theme Toggle Icon Specific */
+html.dark .w-5.h-5.text-yellow-400 {
+  color: #fbbf24 !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4)) !important;
+}
+
+/* Button with Icons - Enhanced Visibility */
+html.dark button .w-5.h-5,
+html.dark button .w-4.h-4 {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4)) !important;
+}
+
+/* Patient Avatar Text Enhancement */
+html.dark .w-12.h-12.rounded-full .text-white {
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+  font-weight: 700 !important;
+}
+
+/* User Avatar in Header */
+html.dark .h-10.w-10.rounded-full {
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .h-10.w-10.rounded-full .text-white {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+  font-weight: 700 !important;
+}
+
+/* Logo Icon in Header */
+html.dark .w-10.h-10.rounded-xl svg {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5)) !important;
+}
+
+/* Search Input Icon */
+html.dark .SearchInput svg,
+html.dark .relative svg {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+}
+
+/* Clear/Close Icons */
+html.dark button svg[viewBox*="24"] {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+}
+
+/* Hospital Dashboard Patient Cards - Force High Contrast */
+html.dark .motion-div .bg-gray-700,
+html.dark .motion-div .bg-gray-600 {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
+  border: 1px solid #6b7280 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Patient Card Content Enhanced */
+html.dark .motion-div .CardHeader,
+html.dark .motion-div .CardContent {
+  color: #ffffff !important;
+}
+
+html.dark .motion-div .CardHeader *,
+html.dark .motion-div .CardContent * {
+  color: #ffffff !important;
+}
+
+/* Patient Avatar - Maximum Contrast */
+html.dark .motion-div .w-12.h-12.rounded-full {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%) !important;
+  border: 2px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1), 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark .motion-div .bg-gradient-to-br.from-green-500.to-emerald-600 {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  border: 2px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1), 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Patient Name and Email - Maximum Contrast */
+html.dark .motion-div .font-bold {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  font-weight: 700 !important;
+}
+
+html.dark .motion-div .text-sm.font-medium {
+  color: #e5e7eb !important;
+  font-weight: 500 !important;
+}
+
+/* Access Grant Details Enhanced */
+html.dark .motion-div .flex.justify-between span {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+}
+
+/* Button Icons in Patient Cards */
+html.dark .motion-div .Button svg,
+html.dark .motion-div button svg {
+  color: #ffffff !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5)) !important;
+}
+
+/* Card Hover States */
+html.dark .motion-div:hover .bg-gray-700 {
+  background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
+  border-color: #9ca3af !important;
+}
+
+html.dark .motion-div:hover .bg-gray-600 {
+  background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%) !important;
+  border-color: #d1d5db !important;
+}
+
+/* Badge Components in Dark Mode */
+html.dark .badge,
+html.dark [class*="badge"],
+html.dark .inline-flex.items-center {
+  background-color: #4b5563 !important;
+  color: #ffffff !important;
+  border: 1px solid #6b7280 !important;
+  font-weight: 600 !important;
+}
+
+/* Secondary Variant Badges */
+html.dark .bg-slate-100.text-slate-800 {
+  background-color: #4b5563 !important;
+  color: #ffffff !important;
+  border: 1px solid #6b7280 !important;
+}
+
+/* Patient Count Badge Specific */
+html.dark .text-sm:has-text("Patient") {
+  background-color: #4b5563 !important;
+  color: #ffffff !important;
+  border: 1px solid #6b7280 !important;
+  padding: 4px 12px !important;
+  border-radius: 20px !important;
+  font-weight: 600 !important;
+}
+
+/* ENHANCED TEXT CONTRAST FOR LIGHT AND DARK MODES */
+
+/* Light Mode - High Contrast Text */
+.text-gray-900,
+.text-slate-900 {
+  color: #111827 !important;
+  font-weight: 600 !important;
+}
+
+.text-gray-800,
+.text-slate-800 {
+  color: #1f2937 !important;
+  font-weight: 500 !important;
+}
+
+.text-gray-700,
+.text-slate-700 {
+  color: #374151 !important;
+  font-weight: 500 !important;
+}
+
+/* Dark Mode - High Contrast Text */
+html.dark .text-gray-900,
+html.dark .text-slate-900 {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .text-gray-800,
+html.dark .text-slate-800 {
+  color: #f9fafb !important;
+  font-weight: 500 !important;
+}
+
+html.dark .text-gray-700,
+html.dark .text-slate-700 {
+  color: #f3f4f6 !important;
+  font-weight: 500 !important;
+}
+
+/* Patient Record Viewer Specific Enhancements */
+.PatientRecordViewerPage .text-slate-900,
+.PatientRecordViewerPage .text-gray-900 {
+  color: #111827 !important;
+  font-weight: 600 !important;
+}
+
+html.dark .PatientRecordViewerPage .text-slate-900,
+html.dark .PatientRecordViewerPage .text-gray-900 {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Card Content Text Enhancement */
+.Card .text-slate-900,
+.Card .text-gray-900,
+.CardContent .text-slate-900,
+.CardContent .text-gray-900 {
+  color: #111827 !important;
+  font-weight: 600 !important;
+}
+
+html.dark .Card .text-slate-900,
+html.dark .Card .text-gray-900,
+html.dark .CardContent .text-slate-900,
+html.dark .CardContent .text-gray-900 {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Table Text Enhancement */
+table th,
+table td {
+  font-weight: 600 !important;
+}
+
+table .text-gray-900,
+table .text-slate-900 {
+  color: #111827 !important;
+  font-weight: 600 !important;
+}
+
+html.dark table .text-gray-900,
+html.dark table .text-slate-900 {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Additional table text colors for dark mode */
+html.dark table .text-gray-800,
+html.dark table td .text-gray-800 {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+}
+
+html.dark table .text-gray-700,
+html.dark table td .text-gray-700 {
+  color: #f3f4f6 !important;
+  font-weight: 500 !important;
+}
+
+/* Force all table text to be white in dark mode */
+html.dark table td {
+  color: #ffffff !important;
+}
+
+html.dark table th {
+  color: #ffffff !important;
+}
+
+/* Super aggressive table text rules for dark mode */
+html.dark table td *,
+html.dark table th *,
+html.dark tbody td,
+html.dark tbody th,
+html.dark table tbody td,
+html.dark table tbody th {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* Override any specific text color classes in tables */
+html.dark table td.text-gray-900,
+html.dark table td.text-gray-800,
+html.dark table td.text-gray-700,
+html.dark table td.text-slate-900,
+html.dark table td.text-slate-800,
+html.dark table td.text-slate-700 {
+  color: #ffffff !important;
+}
+
+/* Ultra specific rules for PatientRecordViewerPage table */
+html.dark .overflow-x-auto table td,
+html.dark .overflow-x-auto table th,
+html.dark [class*="CardContent"] table td,
+html.dark [class*="CardContent"] table th {
+  color: #ffffff !important;
+  background-color: inherit !important;
+}
+
+/* Force table cell content to be white with maximum specificity */
+html.dark table.w-full td {
+  color: #ffffff !important;
+}
+
+html.dark table.w-full th {
+  color: #ffffff !important;
+}
+
+/* Final fallback - force all table text in dark mode */
+html.dark table td,
+html.dark table th {
+  color: #ffffff !important;
+}
+
+/* Override Tailwind's text utilities in dark mode tables */
+html.dark table .dark\:text-white,
+html.dark table .dark\:\!text-white {
+  color: #ffffff !important;
+}
+
+/* Nuclear option - force all text content in tables to be white in dark mode */
+html.dark table tbody tr td,
+html.dark table tbody tr td *,
+html.dark .overflow-x-auto table tbody tr td,
+html.dark .overflow-x-auto table tbody tr td * {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* Specifically target the PatientRecordViewerPage table structure */
+html.dark [class*="Card"] table tbody td {
+  color: #ffffff !important;
+}
+
+/* Ultimate fix - target by element tree structure */
+html.dark div.overflow-x-auto > table.w-full > tbody > tr > td {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* Force visibility and color for all table text content */
+html.dark table td {
+  color: #ffffff !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Strong/Bold Text Enhancement */
+strong {
+  font-weight: 700 !important;
+  color: #111827 !important;
+}
+
+html.dark strong {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Patient Details Specific */
+.space-y-2 p {
+  color: #111827 !important;
+  font-weight: 600 !important;
+}
+
+html.dark .space-y-2 p {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Card Titles */
+.CardTitle {
+  color: #111827 !important;
+  font-weight: 700 !important;
+}
+
+html.dark .CardTitle {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Generic Text Color Enhancement */
+p, span, div:not(.bg-blue-500):not(.bg-green-500):not(.bg-red-500) {
+  color: #374151 !important;
+  font-weight: 500 !important;
+}
+
+html.dark p,
+html.dark span,
+html.dark div:not(.bg-blue-500):not(.bg-green-500):not(.bg-red-500) {
+  color: #f9fafb !important;
+  font-weight: 500 !important;
+}
+
+/* SPECIFIC HOSPITAL DASHBOARD ICON FIXES */
+
+/* HealthVolt Logo Icon in Header - Main Dashboard */
+html.dark .w-10.h-10.rounded-xl.bg-gradient-to-br svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  fill: none !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)) !important;
+}
+
+/* Hospital Portal Text Icon Area */
+html.dark .flex.items-center.space-x-3 .w-10.h-10 svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 2 !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)) !important;
+}
+
+/* Patients with Active Access Icon */
+html.dark .w-8.h-8.bg-gradient-to-br.from-blue-500.to-indigo-600 svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 2 !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)) !important;
+}
+
+/* Request Patient Access Button Icon */
+html.dark .bg-gradient-to-r.from-blue-600.to-indigo-600 .w-5.h-5.mr-2 {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 2 !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5)) !important;
+}
+
+/* CardTitle Icon Container */
+html.dark .CardTitle .w-8.h-8 {
+  background: linear-gradient(135deg, #3b82f6 0%, #4338ca 100%) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+}
+
+html.dark .CardTitle .w-8.h-8 svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 2 !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)) !important;
+}
+
+/* Header SVG Icons - Universal Fix */
+html.dark .sticky.top-0 svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  fill: none !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4)) !important;
+}
+
+/* Card Header Icons - Universal Fix */
+html.dark .CardHeader svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 2 !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)) !important;
+}
+
+/* All SVG Elements in Dark Mode - Aggressive Fix */
+html.dark .bg-gray-800 svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  fill: none !important;
+  stroke-width: 2 !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4)) !important;
+}
+
+/* Icon Background Containers */
+html.dark .bg-gradient-to-br.from-blue-500.to-indigo-600 {
+  background: linear-gradient(135deg, #3b82f6 0%, #4338ca 100%) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Force White Text on All Icons */
+html.dark .text-white {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* SVG Stroke Override for Dark Mode */
+html.dark svg[stroke="currentColor"] {
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+}
+
+html.dark svg[fill="currentColor"] {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+/* ULTRA-SPECIFIC HOSPITAL DASHBOARD FIXES */
+
+/* Force ALL SVG elements in dark mode to be white */
+html.dark svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  fill: none !important;
+}
+
+/* Header Area - HealthVolt Logo and Portal Text */
+html.dark header svg,
+html.dark .sticky svg,
+html.dark .backdrop-blur-sm svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 2 !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)) !important;
+}
+
+/* Card Elements - Patients with Active Access */
+html.dark .Card svg,
+html.dark .shadow-xl svg,
+html.dark .border-0 svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 2 !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)) !important;
+}
+
+/* Icon Containers with Background */
+html.dark [class*="bg-gradient-to-br"] svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 2 !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)) !important;
+}
+
+/* Ultimate SVG Fix - Nuclear Option */
+html.dark * svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  fill: none !important;
+  stroke-width: 2 !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4)) !important;
+}
+
+/* Specific Path Elements */
+html.dark svg path {
+  stroke: #ffffff !important;
+  fill: none !important;
+}
+
+/* Override any inline styles */
+html.dark svg[style*="color"],
+html.dark svg[style*="stroke"] {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Specific overrides for any remaining issues */
+html.dark .text-gray-300,
+html.dark .text-white,
+html.dark .text-black {
+  color: #ffffff !important;
+}
+
+/* Statistics cards - maximum specificity */
+html.dark .CardContent p {
+  color: #ffffff !important;
+}
+
+html.dark .ml-4 p {
+  color: #ffffff !important;
+}
+
+/* Override any Tailwind classes */
+html.dark .text-2xl,
+html.dark .text-sm {
+  color: #ffffff !important;
+}
+
+/* Force styling on flex children */
+html.dark .flex .ml-4 * {
+  color: #ffffff !important;
+}
+
+/* Card content override */
+html.dark .p-6 * {
+  color: #ffffff !important;
+}
+
+/* Patient dashboard specific targeting with highest priority */
+html.dark .bg-gray-800 p,
+html.dark .bg-gray-800 span,
+html.dark .bg-gray-800 div,
+html.dark .bg-gray-800 h1,
+html.dark .bg-gray-800 h2,
+html.dark .bg-gray-800 h3,
+html.dark .bg-gray-800 h4 {
+  color: #ffffff !important;
+}
+
+/* Welcome section */
+html.dark .welcome-back {
+  color: #ffffff !important;
+}
+
+/* Statistics text forcing */
+html.dark .statistics-card * {
+  color: #ffffff !important;
+}
+
+/* Try to override inline styles */
+html.dark [style*="color"] {
+  color: #ffffff !important;
+}
+
+/* Last resort - body level override */
+body.dark *:not(input):not(textarea):not(select) {
+  color: #ffffff !important;
+}
+
+/* Login page input field fixes */
+html.dark input[type="password"],
+html.dark input[type="email"],
+html.dark input[type="text"] {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #ffffff !important;
+}
+
+html.dark input[type="password"]:focus,
+html.dark input[type="email"]:focus,
+html.dark input[type="text"]:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+html.dark input::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Specific login page styling */
+html.dark .bg-slate-700 {
+  background-color: #374151 !important;
+}
+
+html.dark .text-slate-400 {
+  color: #9ca3af !important;
+}
+
+html.dark .border-slate-600 {
+  border-color: #4b5563 !important;
+}
+
+/* Override universal text color for input fields */
+html.dark input {
+  color: #ffffff !important;
+}
+
+/* Light mode input field fixes */
+input[type="password"],
+input[type="email"],
+input[type="text"] {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #111827 !important;
+}
+
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="text"]:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+input::placeholder {
+  color: #6b7280 !important;
+}
+
+/* Specific light mode overrides */
+.bg-white input {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+}
+
+/* Login page specific fixes for light mode */
+.text-slate-900 {
+  color: #111827 !important;
+}
+
+.bg-white {
+  background-color: #ffffff !important;
+}
+
+.border-slate-300 {
+  border-color: #d1d5db !important;
+}
+
+/* Upload New Record button styling for dark mode */
+html.dark .bg-teal-500 {
+  background-color: #374151 !important;
+}
+
+html.dark .hover\\:bg-teal-600:hover {
+  background-color: #4b5563 !important;
+}
+
+html.dark .text-white {
+  color: #ffffff !important;
+}
+
+/* Dark gray theme for upload button in dark mode */
+html.dark button[class*="bg-teal"] {
+  background-color: #374151 !important;
+  border-color: #374151 !important;
+}
+
+html.dark button[class*="bg-teal"]:hover {
+  background-color: #4b5563 !important;
+  border-color: #4b5563 !important;
+}
+
+/* General button styling for dark mode */
+html.dark .bg-gray-700 {
+  background-color: #374151 !important;
+}
+
+html.dark .hover\\:bg-gray-600:hover {
+  background-color: #4b5563 !important;
+}
+
+/* Login page heading visibility fixes */
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark .text-2xl,
+html.dark .text-3xl {
+  color: #ffffff !important;
+}
+
+/* Specific login page text */
+html.dark .font-bold,
+html.dark .font-semibold {
+  color: #ffffff !important;
+}
+
+/* Sign in heading specifically */
+html.dark [class*="text-center"] h1,
+html.dark [class*="text-center"] h2,
+html.dark [class*="text-center"] h3 {
+  color: #ffffff !important;
+}
+
+/* Card titles and headings */
+html.dark .CardTitle,
+html.dark .card-title {
+  color: #ffffff !important;
+}
+
+/* Login page specific heading fixes */
+html.dark .text-lg.font-bold {
+  color: #ffffff !important;
+}
+
+html.dark .text-white {
+  color: #ffffff !important;
+}
+
+/* Force white text for login headings */
+html.dark h3.text-lg {
+  color: #ffffff !important;
+}
+
+html.dark .text-center h3 {
+  color: #ffffff !important;
+}
+
+/* Override any conflicting styles */
+html.dark .text-slate-800 {
+  color: #ffffff !important;
+}
+
+/* Reduce brightness of buttons in dark mode */
+html.dark .bg-blue-600 {
+  background-color: #1e40af !important;
+}
+
+html.dark .hover\\:bg-blue-700:hover {
+  background-color: #1d4ed8 !important;
+}
+
+/* Patient/Hospital selection buttons - reduce brightness */
+html.dark button[class*="bg-blue"] {
+  background-color: #1e3a8a !important;
+  opacity: 0.9 !important;
+}
+
+html.dark button[class*="bg-blue"]:hover {
+  background-color: #1e40af !important;
+  opacity: 1 !important;
+}
+
+/* Sign in button - darker and less bright */
+html.dark .bg-blue-500 {
+  background-color: #1e40af !important;
+}
+
+html.dark .hover\\:bg-blue-600:hover {
+  background-color: #1d4ed8 !important;
+}
+
+/* Outline buttons - darker borders */
+html.dark button[variant="outline"] {
+  border-color: #374151 !important;
+  background-color: transparent !important;
+  color: #d1d5db !important;
+}
+
+html.dark button[variant="outline"]:hover {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+}
+
+/* Remove white glow/light behind icons */
+html.dark svg,
+html.dark .w-4.h-4,
+html.dark .w-5.h-5,
+html.dark .w-6.h-6 {
+  filter: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Remove any glowing effects from buttons and icons */
+html.dark button svg {
+  box-shadow: none !important;
+  filter: none !important;
+  background: transparent !important;
+  text-shadow: none !important;
+}
+
+/* Remove focus glow and shadows */
+html.dark *:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Remove any button glow effects */
+html.dark button {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+html.dark button:hover {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Remove card shadows and glows */
+html.dark .shadow-lg {
+  box-shadow: none !important;
+}
+
+html.dark .shadow-xl {
+  box-shadow: none !important;
+}
+
+html.dark .shadow-sm {
+  box-shadow: none !important;
+}
+
+/* Remove backdrop blur effects that might cause white glow */
+html.dark .backdrop-blur-sm {
+  backdrop-filter: none !important;
+}
+
+/* Remove any gradient glows */
+html.dark .bg-gradient-to-br {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Specifically target the heart icon and logo area */
+html.dark .from-blue-600.to-indigo-600 {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Remove any text shadows */
+html.dark * {
+  text-shadow: none !important;
+}
+
+/* Landing page border removal */
+.landing-page *,
+.landing-page img,
+.landing-page div,
+.landing-page p,
+.landing-page h1,
+.landing-page h2,
+.landing-page h3,
+.landing-page span,
+.landing-page button,
+.landing-page section {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* FOOTER SPECIFIC BORDER REMOVAL - EXACT TARGETING */
+footer#contact,
+footer#contact > *,
+footer#contact > * > *,
+footer#contact > * > * > *,
+footer#contact div,
+footer#contact div div,
+footer#contact div div div,
+footer#contact .max-w-7xl,
+footer#contact .max-w-7xl > *,
+footer#contact .grid,
+footer#contact .grid > *,
+footer#contact .grid div,
+footer#contact [class*="col-span"],
+footer#contact [class*="md:col-span"],
+footer#contact .col-span-1,
+footer#contact .col-span-2,
+footer#contact .md\\:col-span-2,
+footer#contact .md\\:col-span-4 {
+  border: 0px solid transparent !important;
+  border-width: 0px !important;
+  border-style: none !important;
+  border-color: transparent !important;
+  border-top: 0px solid transparent !important;
+  border-right: 0px solid transparent !important;
+  border-bottom: 0px solid transparent !important;
+  border-left: 0px solid transparent !important;
+  outline: 0px solid transparent !important;
+  outline-width: 0px !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
+}
+
+/* ULTIMATE BORDER ELIMINATION - FINAL SOLUTION */
+*,
+*::before,
+*::after,
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1, h2, h3, h4, h5, h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+  border: 0 !important;
+  border-width: 0 !important;
+  border-style: none !important;
+  border-color: transparent !important;
+  border-top: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+  border-left: 0 !important;
+  border-top-width: 0 !important;
+  border-right-width: 0 !important;
+  border-bottom-width: 0 !important;
+  border-left-width: 0 !important;
+  border-top-style: none !important;
+  border-right-style: none !important;
+  border-bottom-style: none !important;
+  border-left-style: none !important;
+  border-top-color: transparent !important;
+  border-right-color: transparent !important;
+  border-bottom-color: transparent !important;
+  border-left-color: transparent !important;
+  outline: 0 !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
+  -ms-box-shadow: none !important;
+  -o-box-shadow: none !important;
+  text-shadow: none !important;
+  -webkit-text-shadow: none !important;
+  -moz-text-shadow: none !important;
+  -ms-text-shadow: none !important;
+  -o-text-shadow: none !important;
+}
+
+/* ULTRA-AGGRESSIVE BORDER REMOVAL - NUCLEAR OPTION */
+* {
+  border: 0px solid transparent !important;
+  border-width: 0px !important;
+  border-style: none !important;
+  border-color: transparent !important;
+  outline: 0px solid transparent !important;
+  outline-width: 0px !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
+}
+
+/* Force override ALL possible border sources */
+*,
+*::before,
+*::after {
+  border: 0 !important;
+  border-top: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+  border-left: 0 !important;
+  border-width: 0 !important;
+  border-top-width: 0 !important;
+  border-right-width: 0 !important;
+  border-bottom-width: 0 !important;
+  border-left-width: 0 !important;
+  border-style: none !important;
+  border-top-style: none !important;
+  border-right-style: none !important;
+  border-bottom-style: none !important;
+  border-left-style: none !important;
+  border-color: transparent !important;
+  border-top-color: transparent !important;
+  border-right-color: transparent !important;
+  border-bottom-color: transparent !important;
+  border-left-color: transparent !important;
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Target the exact footer structure from screenshot */
+footer#contact,
+footer#contact *,
+footer#contact div,
+footer#contact .grid,
+footer#contact .grid > div,
+footer#contact .col-span-1,
+footer#contact .col-span-2,
+footer#contact .md\\:col-span-2,
+footer#contact .md\\:col-span-4,
+footer#contact .max-w-7xl,
+footer#contact .mx-auto,
+footer#contact .px-4,
+footer#contact .sm\\:px-6,
+footer#contact .lg\\:px-8,
+footer#contact .grid-cols-1,
+footer#contact .md\\:grid-cols-4,
+footer#contact .gap-8 {
+  border: none !important;
+  border-width: 0 !important;
+  border-style: none !important;
+  border-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove ALL Tailwind border utilities */
+.border,
+.border-0,
+.border-2,
+.border-4,
+.border-8,
+.border-t,
+.border-r,
+.border-b,
+.border-l,
+.border-t-0,
+.border-r-0,
+.border-b-0,
+.border-l-0,
+.border-t-2,
+.border-r-2,
+.border-b-2,
+.border-l-2,
+.border-t-4,
+.border-r-4,
+.border-b-4,
+.border-l-4,
+.border-t-8,
+.border-r-8,
+.border-b-8,
+.border-l-8,
+.border-solid,
+.border-dashed,
+.border-dotted,
+.border-double,
+.border-none {
+  border: none !important;
+  border-width: 0 !important;
+  border-style: none !important;
+}
+
+/* Remove all possible color variants */
+.border-transparent,
+.border-current,
+.border-black,
+.border-white,
+.border-slate-50,
+.border-slate-100,
+.border-slate-200,
+.border-slate-300,
+.border-slate-400,
+.border-slate-500,
+.border-slate-600,
+.border-slate-700,
+.border-slate-800,
+.border-slate-900,
+.border-gray-50,
+.border-gray-100,
+.border-gray-200,
+.border-gray-300,
+.border-gray-400,
+.border-gray-500,
+.border-gray-600,
+.border-gray-700,
+.border-gray-800,
+.border-gray-900 {
+  border: none !important;
+  border-color: transparent !important;
+}
+
+/* Remove ring utilities that create border-like effects */
+.ring,
+.ring-0,
+.ring-1,
+.ring-2,
+.ring-4,
+.ring-8,
+.ring-inset,
+.ring-slate-200,
+.ring-slate-300,
+.ring-gray-200,
+.ring-gray-300 {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Force browser reset */
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
 /* Print styles */
 @media print {
   body {
@@ -525,4 +2530,190 @@ button:not(.custom-button):hover {
   .no-print {
     display: none !important;
   }
+}
+
+/* FINAL NUCLEAR OPTION - HIGHEST SPECIFICITY BORDER REMOVAL */
+html body * {
+  border: 0px solid transparent !important;
+  border-width: 0px !important;
+  border-style: none !important;
+  border-color: transparent !important;
+  outline: 0px solid transparent !important;
+  outline-width: 0px !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
+  text-shadow: none !important;
+  -webkit-text-shadow: none !important;
+  -moz-text-shadow: none !important;
+}
+
+/* Force override browser default styles */
+html body footer#contact *,
+html body footer#contact div,
+html body footer#contact .grid,
+html body footer#contact .grid > div,
+html body footer#contact .grid div {
+  border: 0px !important;
+  border-width: 0px !important;
+  border-style: none !important;
+  border-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Override any possible Tailwind utilities */
+html body .border-0,
+html body .border,
+html body .border-t,
+html body .border-r,
+html body .border-b,
+html body .border-l,
+html body .border-2,
+html body .border-4,
+html body .border-8 {
+  border: 0px !important;
+  border-width: 0px !important;
+  border-style: none !important;
+  border-color: transparent !important;
+}
+
+/* Remove any possible ring or focus effects */
+html body *:focus,
+html body *:focus-visible,
+html body *:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Target specific elements that might have borders */
+html body h1,
+html body h2,
+html body h3,
+html body h4,
+html body h5,
+html body h6,
+html body p,
+html body div,
+html body span,
+html body ul,
+html body li {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* FLOATING CARDS SPECIFIC BORDER REMOVAL */
+.absolute.top-10.-left-8,
+.absolute.bottom-10.-right-8,
+.bg-white.rounded-2xl,
+.shadow-lg,
+.shadow-xl,
+.p-6.rounded-2xl,
+.bg-slate-800,
+.bg-white {
+  border: 0px solid transparent !important;
+  border-width: 0px !important;
+  border-style: none !important;
+  border-color: transparent !important;
+  outline: 0px solid transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
+}
+
+/* TARGET ALL POSSIBLE CARD COMBINATIONS */
+div[class*="rounded-2xl"],
+div[class*="shadow-xl"],
+div[class*="p-6"],
+div[class*="bg-slate-800"],
+div[class*="bg-white"],
+[class*="motion-div"] {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove any possible ring effects */
+.ring-1,
+.ring-2,
+.ring-4,
+.ring-slate-200,
+.ring-gray-200,
+.ring-white {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* ULTIMATE BORDER AND SHADOW ELIMINATION */
+* {
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
+}
+
+/* Remove all shadows from Tailwind classes */
+.shadow-sm,
+.shadow,
+.shadow-md,
+.shadow-lg,
+.shadow-xl,
+.shadow-2xl,
+.shadow-inner,
+.hover\:shadow-xl:hover,
+.hover\:shadow-2xl:hover,
+.hover\:shadow-lg:hover {
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
+}
+
+/* Target landing page specific elements */
+.absolute,
+motion-div,
+[class*="motion"],
+.bg-white,
+.bg-slate-800,
+.bg-slate-900 {
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* NUCLEAR OPTION - REMOVE ALL BORDERS AND SHADOWS EVERYWHERE */
+*, *::before, *::after {
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* Override all possible border classes */
+[class*="border"],
+[class*="shadow"],
+[class*="ring"] {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* ULTIMATE NUCLEAR OPTION - DESTROY ALL BORDERS */
+button, div, span, section, main, header, footer, article, aside, nav, ul, li, p, h1, h2, h3, h4, h5, h6, img, svg {
+  border: none !important;
+  border-width: 0px !important;
+  border-style: none !important;
+  border-color: transparent !important;
+  outline: none !important;
+  outline-width: 0px !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
 }

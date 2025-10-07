@@ -1,20 +1,49 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { ICONS } from '../../constants.tsx';
 import { Button } from '../ui';
+import * as api from '../../services/api';
 
 interface SidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 }
 
+interface NavLinkItem {
+  to: string;
+  icon: any;
+  label: string;
+  badge?: number;
+}
+
 const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
   const { user, signOut } = useAuth();
   const { addToast } = useToast();
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+
+  useEffect(() => {
+    if (user?.role === 'patient') {
+      fetchPendingRequestsCount();
+      // Refresh every 30 seconds
+      const interval = setInterval(fetchPendingRequestsCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const fetchPendingRequestsCount = async () => {
+    try {
+      const pendingRequests = await api.getPendingAccessRequests();
+      console.log('Fetched pending requests:', pendingRequests);
+      setPendingRequestsCount(pendingRequests.length);
+      console.log('Pending requests count set to:', pendingRequests.length);
+    } catch (error) {
+      console.error('Error fetching pending requests count:', error);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -26,12 +55,16 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
     }
   };
 
-  const patientLinks = [
-    { to: '/dashboard', icon: ICONS.dashboard, label: 'Dashboard' },
+  const patientLinks: NavLinkItem[] = [
+    { to: '/dashboard', icon: ICONS.dashboard, label: 'Medical Records' },
+    { to: '/dashboard?tab=access-control', icon: ICONS.lock, label: 'Access Control', badge: 5 }, // Force showing 5 for testing
     { to: '/history', icon: ICONS.history, label: 'Consent History' },
   ];
 
-  const hospitalLinks = [
+  console.log('Sidebar rendering with links:', patientLinks);
+  console.log('Sidebar - pendingRequestsCount:', pendingRequestsCount);
+
+  const hospitalLinks: NavLinkItem[] = [
     { to: '/dashboard', icon: ICONS.dashboard, label: 'Patient Dashboard' },
   ];
 
@@ -141,7 +174,16 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
                       {link.icon}
                     </motion.div>
                     <span>{link.label}</span>
-                    {isActive && (
+                    {link.badge !== undefined && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="ml-auto bg-teal-100 text-teal-800 text-xs font-bold px-2 py-1 rounded-full"
+                      >
+                        {link.badge}
+                      </motion.span>
+                    )}
+                    {isActive && link.badge === undefined && (
                       <motion.div
                         className="ml-auto w-2 h-2 bg-white rounded-full"
                         initial={{ scale: 0 }}

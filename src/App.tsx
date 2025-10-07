@@ -11,6 +11,7 @@ import PatientDashboard from './pages/patient/PatientDashboard';
 import HospitalDashboard from './pages/hospital/HospitalDashboard';
 import PatientRecordViewerPage from './pages/hospital/PatientRecordViewerPage';
 import ConsentHistoryPage from './pages/patient/ConsentHistoryPage';
+import EmailAuthPage from './pages/EmailAuthPage';
 import MainLayout from './components/layout/MainLayout';
 
 // Enhanced loading spinner component
@@ -104,6 +105,7 @@ const AppRouter: React.FC = () => {
           <>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth" element={<EmailAuthPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </>
         ) : (

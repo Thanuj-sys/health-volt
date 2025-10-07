@@ -83,18 +83,26 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2, duration: 0.4 }}
         >
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
+          <div className={`flex items-center justify-center w-10 h-10 rounded-xl shadow-lg ${
+            isDarkMode 
+              ? 'bg-gradient-to-br from-purple-600 to-purple-800' 
+              : 'bg-gradient-to-br from-blue-500 to-purple-600'
+          }`}>
             <svg 
-              className="w-6 h-6 text-white" 
-              fill="none" 
-              stroke="currentColor" 
+              className="w-6 h-6"
               viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
             >
               <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" 
+                d="M12 4a1 1 0 011 1v6h6a1 1 0 110 2h-6v6a1 1 0 11-2 0v-6H5a1 1 0 110-2h6V5a1 1 0 011-1z" 
+                fill={isDarkMode ? '#a855f7' : '#ffffff'}
+                stroke={isDarkMode ? '#a855f7' : '#ffffff'}
+                strokeWidth="2"
+                style={{
+                  filter: isDarkMode 
+                    ? 'drop-shadow(0 0 8px rgba(168, 85, 247, 0.8))' 
+                    : 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))'
+                }}
               />
             </svg>
           </div>
@@ -134,11 +142,11 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
             }`}
           >
             {isDarkMode ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`w-5 h-5 ${isDarkMode ? 'text-yellow-400 stroke-yellow-400' : 'text-yellow-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={isDarkMode ? {color: '#fbbf24', stroke: '#fbbf24'} : {}}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
             ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`w-5 h-5 ${isDarkMode ? 'text-slate-800 stroke-slate-800' : 'text-slate-800'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={!isDarkMode ? {color: '#1e293b', stroke: '#1e293b'} : {}}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
               </svg>
             )}
@@ -267,7 +275,7 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
                           whileHover={{ scale: 1.1 }}
                           transition={{ type: "spring", stiffness: 400, damping: 17 }}
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className={`w-5 h-5 ${isDarkMode ? 'text-slate-400 stroke-slate-400' : 'text-slate-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={isDarkMode ? {color: '#9ca3af', stroke: '#9ca3af'} : {}}>
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                           </svg>
                         </motion.div>

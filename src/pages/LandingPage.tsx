@@ -23,7 +23,7 @@ const LandingPage: React.FC = () => {
       contactSection.scrollIntoView({ behavior: 'smooth' });
     } else {
       // Fallback to email
-      window.location.href = 'mailto:contact@healthvolt.com';
+      window.location.href = 'mailto:thanujkingdom@gmail.com';
     }
   };
 
@@ -41,10 +41,10 @@ const LandingPage: React.FC = () => {
         : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50'
     }`}>
       {/* Header */}
-      <header className={`backdrop-blur-sm border-b sticky top-0 z-50 transition-colors duration-300 ${
+      <header className={`backdrop-blur-sm sticky top-0 z-50 transition-colors duration-300 ${
         isDarkMode 
-          ? 'bg-slate-900/80 border-slate-700' 
-          : 'bg-white/80 border-slate-200'
+          ? 'bg-slate-900/80' 
+          : 'bg-white/80'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
@@ -79,16 +79,6 @@ const LandingPage: React.FC = () => {
               >
                 About
               </button>
-              <button 
-                onClick={() => scrollToSection('contact')}
-                className={`font-medium transition-colors cursor-pointer ${
-                  isDarkMode 
-                    ? 'text-white hover:text-gray-300' 
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Contact
-              </button>
               
               {/* Dark Mode Toggle */}
               <button
@@ -113,12 +103,8 @@ const LandingPage: React.FC = () => {
               
               <Button 
                 onClick={handleSignIn}
-                variant="outline"
-                className={`transition-colors duration-300 ${
-                  isDarkMode
-                    ? 'border-blue-400 text-blue-400 hover:bg-blue-400/10'
-                    : 'border-blue-500 text-blue-600 hover:bg-blue-50'
-                }`}
+                variant="default"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold transition-all duration-300"
               >
                 Sign In
               </Button>
@@ -126,7 +112,6 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </header>
-
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -164,18 +149,6 @@ const LandingPage: React.FC = () => {
               >
                 Get Started
               </Button>
-              <Button
-                onClick={handleContactUs}
-                variant="outline"
-                size="lg"
-                className={`font-semibold px-8 py-4 text-lg transition-all duration-300 ${
-                  isDarkMode
-                    ? 'border-2 border-white text-white hover:border-gray-300 hover:bg-white hover:text-gray-900'
-                    : 'border-2 border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50'
-                }`}
-              >
-                Contact Us
-              </Button>
             </div>
           </motion.div>
 
@@ -195,7 +168,7 @@ const LandingPage: React.FC = () => {
                 <img
                   src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
                   alt="Professional Healthcare Provider"
-                  className="w-full h-auto rounded-full object-cover aspect-square shadow-2xl border-8 border-white"
+                  className="w-full h-auto rounded-full object-cover aspect-square"
                 />
               </div>
 
@@ -203,7 +176,7 @@ const LandingPage: React.FC = () => {
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute top-10 -left-8 bg-white rounded-2xl p-4 shadow-lg border border-slate-200"
+                className="absolute top-10 -left-8 bg-white rounded-2xl p-4"
               >
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -212,21 +185,6 @@ const LandingPage: React.FC = () => {
                     </svg>
                   </div>
                   <span className="text-sm font-medium text-slate-700">Secure Records</span>
-                </div>
-              </motion.div>
-
-              <motion.div
-                animate={{ y: [0, 10, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                className="absolute bottom-10 -right-8 bg-white rounded-2xl p-4 shadow-lg border border-slate-200"
-              >
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-medium text-slate-700">HIPAA Compliant</span>
                 </div>
               </motion.div>
             </div>
@@ -265,15 +223,15 @@ const LandingPage: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className={`text-center p-8 rounded-2xl shadow-lg border transition-all duration-300 hover:shadow-2xl ${
+              className={`text-center p-8 rounded-2xl transition-all duration-300 ${
                 isDarkMode
-                  ? 'bg-slate-900 border-slate-700 hover:bg-slate-800'
-                  : 'bg-white border-slate-200 hover:bg-slate-50'
+                  ? 'bg-slate-900 hover:bg-slate-800'
+                  : 'bg-white hover:bg-slate-50'
               }`}
             >
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 transform transition-transform duration-300 hover:scale-110">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <svg className="w-8 h-8 !text-white" fill="none" stroke="#ffffff" strokeWidth="2" viewBox="0 0 24 24" style={{color: '#ffffff !important', stroke: '#ffffff !important'}}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
               <h3 className={`text-xl font-bold mb-4 transition-colors duration-300 ${
@@ -294,15 +252,25 @@ const LandingPage: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
               viewport={{ once: true }}
-              className={`text-center p-8 rounded-2xl shadow-lg border transition-all duration-300 hover:shadow-2xl ${
+              className={`text-center p-8 rounded-2xl transition-all duration-300 ${
                 isDarkMode
-                  ? 'bg-slate-900 border-slate-700 hover:bg-slate-800'
-                  : 'bg-white border-slate-200 hover:bg-slate-50'
+                  ? 'bg-slate-900 hover:bg-slate-800'
+                  : 'bg-white hover:bg-slate-50'
               }`}
             >
               <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 transform transition-transform duration-300 hover:scale-110">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <svg 
+                  className={`w-8 h-8 ${isDarkMode ? 'text-green-400' : '!text-white'}`}
+                  fill="none" 
+                  stroke={isDarkMode ? "#22c55e" : "#ffffff"} 
+                  strokeWidth="2" 
+                  viewBox="0 0 24 24" 
+                  style={{
+                    color: isDarkMode ? '#22c55e' : '#ffffff', 
+                    stroke: isDarkMode ? '#22c55e' : '#ffffff'
+                  }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
               <h3 className={`text-xl font-bold mb-4 transition-colors duration-300 ${
@@ -323,15 +291,15 @@ const LandingPage: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
-              className={`text-center p-8 rounded-2xl shadow-lg border transition-all duration-300 hover:shadow-2xl ${
+              className={`text-center p-8 rounded-2xl transition-all duration-300 ${
                 isDarkMode
-                  ? 'bg-slate-900 border-slate-700 hover:bg-slate-800'
-                  : 'bg-white border-slate-200 hover:bg-slate-50'
+                  ? 'bg-slate-900 hover:bg-slate-800'
+                  : 'bg-white hover:bg-slate-50'
               }`}
             >
               <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6 transform transition-transform duration-300 hover:scale-110">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg className="w-8 h-8 !text-white" fill="none" stroke="#ffffff" strokeWidth="2" viewBox="0 0 24 24" style={{color: '#ffffff !important', stroke: '#ffffff !important'}}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <h3 className={`text-xl font-bold mb-4 transition-colors duration-300 ${
@@ -421,18 +389,6 @@ const LandingPage: React.FC = () => {
                   </div>
                   <span className={`font-medium transition-colors duration-300 ${
                     isDarkMode ? 'text-slate-300' : 'text-slate-700'
-                  }`}>HIPAA compliant security</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${
-                    isDarkMode ? 'bg-blue-900' : 'bg-blue-100'
-                  }`}>
-                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span className={`font-medium transition-colors duration-300 ${
-                    isDarkMode ? 'text-slate-300' : 'text-slate-700'
                   }`}>Seamless provider integration</span>
                 </div>
               </div>
@@ -449,10 +405,10 @@ const LandingPage: React.FC = () => {
               <div className="space-y-6">
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className={`p-6 rounded-2xl shadow-xl border transition-all duration-300 ${
+                  className={`p-6 rounded-2xl transition-all duration-300 ${
                     isDarkMode 
-                      ? 'bg-slate-800 border-slate-600' 
-                      : 'bg-white border-slate-200'
+                      ? 'bg-slate-800' 
+                      : 'bg-white'
                   }`}
                 >
                   <div className="flex items-center space-x-4">
@@ -474,10 +430,10 @@ const LandingPage: React.FC = () => {
 
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className={`p-6 rounded-2xl shadow-xl border transition-all duration-300 ${
+                  className={`p-6 rounded-2xl transition-all duration-300 ${
                     isDarkMode 
-                      ? 'bg-slate-800 border-slate-600' 
-                      : 'bg-white border-slate-200'
+                      ? 'bg-slate-800' 
+                      : 'bg-white'
                   }`}
                 >
                   <div className="flex items-center space-x-4">
@@ -499,10 +455,10 @@ const LandingPage: React.FC = () => {
 
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className={`p-6 rounded-2xl shadow-xl border transition-all duration-300 ${
+                  className={`p-6 rounded-2xl transition-all duration-300 ${
                     isDarkMode 
-                      ? 'bg-slate-800 border-slate-600' 
-                      : 'bg-white border-slate-200'
+                      ? 'bg-slate-800' 
+                      : 'bg-white'
                   }`}
                 >
                   <div className="flex items-center space-x-4">
@@ -542,15 +498,13 @@ const LandingPage: React.FC = () => {
                 </div>
                 <h3 className="text-xl font-bold">HealthVolt</h3>
               </div>
-              <p className={`mb-4 max-w-md transition-colors duration-300 ${
-                isDarkMode ? 'text-slate-300' : 'text-slate-400'
-              }`}>
+              <p className="mb-4 max-w-md text-white transition-colors duration-300">
                 Empowering patients and healthcare providers with secure, intelligent medical record management.
               </p>
               <div className={`text-sm transition-colors duration-300 ${
                 isDarkMode ? 'text-slate-300' : 'text-slate-400'
               }`}>
-                🔒 Secure • 🏥 HIPAA Compliant • 🔐 End-to-End Encrypted
+                🔒 Secure • 🔐 End-to-End Encrypted
               </div>
             </div>
 
@@ -576,14 +530,6 @@ const LandingPage: React.FC = () => {
                   </button>
                 </li>
                 <li>
-                  <button 
-                    onClick={() => scrollToSection('contact')}
-                    className="hover:text-white transition-colors cursor-pointer"
-                  >
-                    Contact
-                  </button>
-                </li>
-                <li>
                   <a href="#privacy" className="hover:text-white transition-colors">Privacy Policy</a>
                 </li>
               </ul>
@@ -594,16 +540,15 @@ const LandingPage: React.FC = () => {
               <ul className={`space-y-2 transition-colors duration-300 ${
                 isDarkMode ? 'text-slate-300' : 'text-slate-400'
               }`}>
-                <li>📧 contact@healthvolt.com</li>
-                <li>📞 +1 (555) 123-4567</li>
-                <li>📍 Healthcare Innovation Center</li>
-                <li>🕒 24/7 Support Available</li>
+                <li>📧 thanujkingdom@gmail.com</li>
+                <li>📞 +91 6380933977</li>
+                <li> 24/7 Support Available</li>
               </ul>
             </div>
           </div>
 
-          <div className={`border-t mt-8 pt-8 text-center transition-colors duration-300 ${
-            isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-700 text-slate-400'
+          <div className={`mt-8 pt-8 text-center transition-colors duration-300 ${
+            isDarkMode ? 'text-slate-300' : 'text-slate-400'
           }`}>
             <p>&copy; 2025 HealthVolt. All rights reserved. | Trusted by healthcare professionals worldwide.</p>
           </div>
